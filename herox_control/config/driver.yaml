@@ -1,0 +1,39 @@
+bus:
+    device: can0
+sync:
+    interval_ms: 100
+    overflow: 0
+#heartbeat:
+#    rate: 1000
+#    msg: "708#05"
+defaults:
+    eds_pkg: herox_control
+    eds_file: "config/roboteq_motor_controllers_v60.eds"
+    #switching_state: 4
+    #pos_to_device: "rint(rad2deg(pos)*1000)" # rad -> mdeg
+    #pos_from_device: "deg2rad(obj6064)/1000" # actual position [mdeg] -> rad
+    vel_to_device: "rint(rad2deg(vel)*60/360)*21" # rad/s -> rpm (accounts for 21:1 transmission as well)
+    vel_from_device: "deg2rad(obj606C*360/60)/21" # actual velocity [rpm] -> rad/s (accounts for 21:1 transmission as well)
+    #eff_to_device: "rint(eff)" # just round to integer
+    #eff_from_device: "0" # unset
+nodes:
+    A2:
+        id: 8
+        motors:
+            front_left_wheel:
+                motor_layer:
+                    cmd_offset: 0
+            front_right_wheel:
+                motor_layer:
+                    cmd_offset: 0x800
+    A3:
+        id: 9
+        motors:
+            back_left_wheel:
+                motor_layer:
+                    cmd_offset: 0
+            back_right_wheel:
+                motor_layer:
+                    cmd_offset: 0x800
+                    
+            

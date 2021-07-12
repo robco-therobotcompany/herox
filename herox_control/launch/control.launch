@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- CANOpen motor controller driver -->
+    <node name="driver" pkg="canopen_motor_node" type="canopen_motor_node" output="screen" clear_params="true" launch-prefix="">
+        <rosparam command="load" file="$(find herox_control)/config/driver.yaml"/>
+    </node>
+
+    <!-- Controller configuration -->
+    <rosparam command="load" file="$(find herox_control)/config/control.yaml" />
+
+    <!-- Controllers -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner"
+        args="herox_joint_publisher herox_velocity_controller" />
+
+    <node name="driver_init" pkg="rosservice" type="rosservice" args="call --wait /driver/init" />
+
+    <!--<node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" />-->
+
+    <node pkg="topic_tools" type="relay" name="cmd_vel_relay"
+        args="cmd_vel herox_velocity_controller/cmd_vel" />
+</launch>

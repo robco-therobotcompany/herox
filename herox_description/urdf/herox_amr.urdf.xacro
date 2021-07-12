@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot name="herox_amr" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="PI" value="3.1415926535897931" />
+
+    <xacro:property name="wheel_radius" value="0.0850" />
+    <xacro:property name="wheel_width" value="0.0900" />
+    <xacro:property name="wheel_y_offset" value="0.1500" />
+    <xacro:property name="wheel_x_offset" value="0.2200" />
+
+    <xacro:macro name="wheel" params="prefix side *joint_pose">
+        <link name="${prefix}_${side}_wheel_link">
+            <collision>
+                <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+                </geometry>
+          </collision>
+        </link>
+
+        <joint name="${prefix}_${side}_wheel" type="continuous">
+          <parent link="base_link"/>
+          <child link="${prefix}_${side}_wheel_link" />
+          <xacro:insert_block name="joint_pose" />
+          <axis xyz="0 1 0" />
+        </joint>
+
+        <!-- Transmission might be needed for simulation, on the real robot this
+             is handled by the driver configuration though -->
+        <transmission name="${prefix}_${side}_wheel_trans">
+          <type>transmission_interface/SimpleTransmission</type>
+          <joint name="${prefix}_${side}_wheel">
+            <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+          </joint>
+          <actuator name="${prefix}_${side}_actuator">
+            <mechanicalReduction>1</mechanicalReduction>
+          </actuator>
+        </transmission>
+    </xacro:macro>
+
+    <link name="base_link" />
+
+    <!-- Wheels -->
+    <xacro:wheel prefix="front" side="left">
+      <origin xyz="${wheel_x_offset} ${wheel_y_offset} 0" rpy="0 0 0" />
+    </xacro:wheel>
+    <xacro:wheel prefix="front" side="right">
+      <origin xyz="${wheel_x_offset} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
+    </xacro:wheel>
+    <xacro:wheel prefix="back" side="left">
+      <origin xyz="${-(wheel_x_offset)} ${wheel_y_offset} 0" rpy="0 0 0" />
+    </xacro:wheel>
+    <xacro:wheel prefix="back" side="right">
+      <origin xyz="${-(wheel_x_offset)} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
+    </xacro:wheel>
+</robot>

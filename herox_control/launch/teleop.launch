@@ -1,0 +1,22 @@
+<launch>
+  <arg name="joy_dev" default="$(optenv RIDGEBACK_JOY_DEVICE /dev/input/js0)" />
+  <arg name="joystick" default="true" />
+
+  <!-- Load URDF for motor controller driver-->
+  <include file="$(find herox_description)/launch/description.launch" />
+
+  <!-- Load control launch file -->
+  <include file="$(find herox_control)/launch/control.launch" />
+
+  <group ns="joystick_teleop" if="$(arg joystick)">
+    <rosparam command="load" file="$(find herox_control)/config/teleop_thrustmaster.yaml" />
+    <param name="joy_node/dev" value="$(arg joy_dev)" />
+
+    <node pkg="joy" type="joy_node" name="joy_node" />
+    <node pkg="teleop_twist_joy" type="teleop_node" name="teleop_twist_joy">
+      <remap from="cmd_vel" to="/cmd_vel" />
+    </node>
+  </group>
+
+  <arg name="config" default="planar" />
+</launch>
