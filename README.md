@@ -30,11 +30,7 @@ The packages provide different launch files for common tasks and subsystems.
 
 ## Control and Teleoperation
 
-To start the low-level motor control software (CAN communication and mecanum controller):
-
-```bash
-ros@ros-usb:~$ roslaunch herox_control control.launch
-```
+To start the low-level motor control software (CAN communication and mecanum controller), use the `control.launch` file of the `herox_control` package. Note, however, that this file is intended to be used by a higher-level launch file. The robot URDF needs to be published first.
 
 To start the motor control software along with a `teleop_twist_joy` node for joystick teleoperation:
 
