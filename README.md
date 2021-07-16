@@ -4,13 +4,13 @@ Common packages for HEROX AMR. These packages are relevant for simulation as wel
 
 # Installation
 
-First, clone the `herox` repository as well as the required `ros_canopen` fork into a catkin workspace:
+First, clone the `herox` repository into a catkin workspace:
 
 ```bash
 ros@ros-usb:~/catkin_ws/src$ git clone git@gitlab.com:kea-robotics/industry_projects/21_amr/herox.git
-#...
-ros@ros-usb:~/catkin_ws/src$ git clone git@gitlab.com:kea-robotics/industry_projects/21_amr/ros_canopen.git
 ```
+
+Install the required [fork](https://gitlab.com/kea-robotics/industry_projects/21_amr/ros_canopen) of `ros_canopen` according to the instructions there.
 
 Build the workspace using `catkin_make`:
 
