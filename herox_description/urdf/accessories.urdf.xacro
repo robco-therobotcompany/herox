@@ -10,9 +10,9 @@
     ridgeback_base/launch/base.launch
   -->
 
-  <xacro:include filename="$(find ridgeback_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro" />
-  <xacro:include filename="$(find ridgeback_description)/urdf/accessories/sick_s300_mount.urdf.xacro" />
-  <xacro:include filename="$(find ridgeback_description)/urdf/accessories/hokuyo_ust-10lx_mount.urdf.xacro" />
+  <xacro:include filename="$(find herox_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro" />
+  <xacro:include filename="$(find herox_description)/urdf/accessories/sick_s300_mount.urdf.xacro" />
+  <xacro:include filename="$(find herox_description)/urdf/accessories/hokuyo_ust-10lx_mount.urdf.xacro" />
 
   <!-- If enabled, generate the front HOKUYO UST-10LX LASER payload. -->
   <xacro:if value="$(optenv RIDGEBACK_FRONT_HOKUYO_LASER 0)">
@@ -60,7 +60,7 @@
   </xacro:if>
 
   <!-- If enabled, generate the optional Microstrain 3DM-GX2/3 IMU payload. -->
-  <xacro:include filename="$(find ridgeback_description)/urdf/accessories/microstrain_imu.urdf.xacro" />
+  <xacro:include filename="$(find herox_description)/urdf/accessories/microstrain_imu.urdf.xacro" />
   <xacro:if value="$(optenv RIDGEBACK_MICROSTRAIN_IMU 0)">
     <xacro:microstrain_imu prefix="$(optenv RIDGEBACK_MICROSTRAIN_IMU_PREFIX upgraded)"
                            mount_link="$(optenv RIDGEBACK_MICROSTRAIN_IMU_MOUNT mid)_mount" >

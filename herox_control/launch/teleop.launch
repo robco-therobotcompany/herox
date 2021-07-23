@@ -3,13 +3,13 @@
   <arg name="joystick" default="true" />
 
   <!-- Load URDF for motor controller driver-->
-  <include file="$(find herox_description)/launch/description.launch" />
+  <!--<include file="$(find herox_description)/launch/description.launch" />-->
 
   <!-- Load control launch file -->
-  <include file="$(find herox_control)/launch/control.launch" />
+  <!--<include file="$(find herox_control)/launch/control.launch" />-->
 
   <group ns="joystick_teleop" if="$(arg joystick)">
-    <rosparam command="load" file="$(find herox_control)/config/teleop_thrustmaster.yaml" />
+    <rosparam command="load" file="$(find herox_control)/config/teleop_xbox.yaml" />
     <param name="joy_node/dev" value="$(arg joy_dev)" />
 
     <node pkg="joy" type="joy_node" name="joy_node" />

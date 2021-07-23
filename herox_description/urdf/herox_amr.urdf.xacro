@@ -46,10 +46,10 @@
     <xacro:wheel prefix="front" side="right">
       <origin xyz="${wheel_x_offset} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
     </xacro:wheel>
-    <xacro:wheel prefix="back" side="left">
+    <xacro:wheel prefix="rear" side="left">
       <origin xyz="${-(wheel_x_offset)} ${wheel_y_offset} 0" rpy="0 0 0" />
     </xacro:wheel>
-    <xacro:wheel prefix="back" side="right">
+    <xacro:wheel prefix="rear" side="right">
       <origin xyz="${-(wheel_x_offset)} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
     </xacro:wheel>
 </robot>

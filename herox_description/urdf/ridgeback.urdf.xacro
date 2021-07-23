@@ -32,7 +32,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
         <geometry>
-          <mesh filename="package://ridgeback_description/meshes/wheel.stl"/>
+          <mesh filename="package://herox_description/meshes/wheel.stl"/>
         </geometry>
         <material name="black" />
       </visual>
@@ -76,7 +76,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="${PI/2} 0 ${PI/2}" />
         <geometry>
-          <mesh filename="package://ridgeback_description/meshes/rocker.stl"/>
+          <mesh filename="package://herox_description/meshes/rocker.stl"/>
         </geometry>
         <material name="black" />
       </visual>
@@ -126,14 +126,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/body.stl"/>
+        <mesh filename="package://herox_description/meshes/body.stl"/>
       </geometry>
       <material name="black" />
     </visual>
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/body-collision.stl"/>
+        <mesh filename="package://herox_description/meshes/body-collision.stl"/>
       </geometry>
     </collision>
     <inertial>
@@ -161,7 +161,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${PI}" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/side-cover.stl"/>
+        <mesh filename="package://herox_description/meshes/side-cover.stl"/>
       </geometry>
       <material name="yellow" />
     </visual>
@@ -170,7 +170,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/side-cover.stl"/>
+        <mesh filename="package://herox_description/meshes/side-cover.stl"/>
       </geometry>
       <material name="yellow" />
     </visual>
@@ -186,7 +186,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/end-cover.stl" />
+        <mesh filename="package://herox_description/meshes/end-cover.stl" />
       </geometry>
       <material name="black" />
     </visual>
@@ -202,7 +202,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${PI}" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/end-cover.stl" />
+        <mesh filename="package://herox_description/meshes/end-cover.stl" />
       </geometry>
       <material name="black" />
     </visual>
@@ -223,7 +223,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/lights.stl" />
+        <mesh filename="package://herox_description/meshes/lights.stl" />
       </geometry>
       <material name="white" />
     </visual>
@@ -232,7 +232,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 ${PI}" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/lights.stl" />
+        <mesh filename="package://herox_description/meshes/lights.stl" />
       </geometry>
       <material name="red" />
     </visual>
@@ -248,14 +248,14 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/top.stl" />
+        <mesh filename="package://herox_description/meshes/top.stl" />
       </geometry>
       <material name="black" />
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/top.stl"/>
+        <mesh filename="package://herox_description/meshes/top.stl"/>
       </geometry>
     </collision>
   </link>
@@ -270,7 +270,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 ${PI/2} 0" />
       <geometry>
-        <mesh filename="package://ridgeback_description/meshes/axle.stl" />
+        <mesh filename="package://herox_description/meshes/axle.stl" />
       </geometry>
       <material name="black" />
     </visual>
@@ -297,12 +297,12 @@
   </joint>
 
   <!-- Bring in simulation data for Gazebo. -->
-  <xacro:include filename="$(find ridgeback_description)/urdf/ridgeback.gazebo" />
+  <xacro:include filename="$(find herox_description)/urdf/ridgeback.gazebo" />
 
   <!-- Optional standard accessories, including their simulation data. The rendering
        of these into the final description is controlled by optenv variables, which
        default each one to off.-->
-  <xacro:include filename="$(find ridgeback_description)/urdf/accessories.urdf.xacro" />
+  <xacro:include filename="$(find herox_description)/urdf/accessories.urdf.xacro" />
 
   <!-- Optional custom includes. -->
   <xacro:include filename="$(optenv RIDGEBACK_URDF_EXTRAS empty.urdf)" />
