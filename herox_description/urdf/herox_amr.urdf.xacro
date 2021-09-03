@@ -2,10 +2,15 @@
 <robot name="herox_amr" xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:property name="PI" value="3.1415926535897931" />
 
-    <xacro:property name="wheel_radius" value="0.0850" />
+    <xacro:property name="wheel_radius" value="0.0900" />
     <xacro:property name="wheel_width" value="0.0900" />
     <xacro:property name="wheel_y_offset" value="0.1500" />
-    <xacro:property name="wheel_x_offset" value="0.2200" />
+    <xacro:property name="wheel_x_offset" value="0.2215" />
+
+    <!-- NOTE: This measurement is rough for now! -->
+    <!-- NOTE: Z-offset is not modeled yet! -->
+    <!-- NOTE: Assuming symmetrical placement of lasers -->
+    <xacro:property name="laser_offset" value="0.270" />
 
     <xacro:macro name="wheel" params="prefix side *joint_pose">
         <link name="${prefix}_${side}_wheel_link">
@@ -15,6 +20,15 @@
                     <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
                 </geometry>
           </collision>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+                </geometry>
+                <material name="grey">
+                    <color rgba="0.5 0.5 0.5 1.0" />
+                </material>
+            </visual>
         </link>
 
         <joint name="${prefix}_${side}_wheel" type="continuous">
@@ -39,6 +53,32 @@
 
     <link name="base_link" />
 
+    <xacro:macro name="laser" params="prefix *joint_pose">
+        <link name="${prefix}_laser">
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.1006 0.1025 0.0802" />
+                </geometry>
+            </collision>
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="0.1006 0.1025 0.0802" />
+                </geometry>
+                <material name="yellow">
+                    <color rgba="1.0 1.0 0 1.0" />
+                </material>
+            </visual>
+        </link>
+
+        <joint name="${prefix}_laser_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="${prefix}_laser"/>
+            <xacro:insert_block name="joint_pose"/>
+        </joint>
+    </xacro:macro>
+
     <!-- Wheels -->
     <xacro:wheel prefix="front" side="left">
       <origin xyz="${wheel_x_offset} ${wheel_y_offset} 0" rpy="0 0 0" />
@@ -52,4 +92,12 @@
     <xacro:wheel prefix="rear" side="right">
       <origin xyz="${-(wheel_x_offset)} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
     </xacro:wheel>
+
+    <!-- Lasers -->
+    <xacro:laser prefix="front">
+	    <origin xyz="${laser_offset} 0 0" rpy="${PI} 0 0" />
+    </xacro:laser>
+    <xacro:laser prefix="rear">
+	    <origin xyz="${-(laser_offset)} 0 0" rpy="${PI} 0 ${PI}" />
+    </xacro:laser>
 </robot>
