@@ -34,12 +34,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   <xacro:macro name="sick_nanoscan3_mount" params="prefix topic location">
 
+    <!-- Height of laser scanners (center point) above ground (base link) -->
+    <xacro:property name="laser_height" value="0.200" />
+
+    <!-- Offset of laser scanners (center point) from center of vehicle (base link) -->
+    <!-- NOTE: This measurement is rough for now! -->
+    <!-- NOTE: Z-offset is not modeled yet! -->
+    <!-- NOTE: Assuming symmetrical placement of lasers -->
+    <xacro:property name="laser_offset" value="0.270" />
+
+
     <xacro:sick_lms1xx frame="${prefix}_laser" topic="${topic}" max_range="10.0" min_angle="-2.3998" max_angle="2.3998" update_rate="33.0"/>
 
     <joint name="${prefix}_laser_joint" type="fixed">
         <!-- This offset is from the base_link to the laser scanner's focal point -->
-        <!-- <origin xyz="${location * 0.270} 0 0.230" rpy="0 0 ${PI/2 - (location * PI/2)}" /> -->
-        <origin xyz="${location * 0.270} 0 0.200" rpy="${PI} 0 ${PI/2 - (location * PI/2)}" />
+	<origin xyz="${location * laser_offset} 0 ${laser_height}" rpy="${PI} 0 ${PI/2 - (location * PI/2)}" />
       <parent link="base_link" />
       <child link="${prefix}_laser" />
     </joint>
