@@ -1,6 +1,7 @@
-# The dual_laser configuration of Ridgeback with
-# the optional SICK LMS100 series LIDAR on the
+# The dual_laser configuration of HEROX with
+# SICK nanoScan3 laser scanner on the
 # front and rear.
 
-RIDGEBACK_FRONT_SICK_LASER=1
-RIDGEBACK_REAR_SICK_LASER=1
+HEROX_FRONT_NANOSCAN_LASER=1
+HEROX_REAR_NANOSCAN_LASER=1
+

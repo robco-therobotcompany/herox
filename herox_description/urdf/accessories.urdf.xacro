@@ -11,6 +11,7 @@
   -->
 
   <xacro:include filename="$(find herox_description)/urdf/accessories/sick_lms1xx_mount.urdf.xacro" />
+  <xacro:include filename="$(find herox_description)/urdf/accessories/sick_nanoscan3_mount.urdf.xacro" />
   <xacro:include filename="$(find herox_description)/urdf/accessories/sick_s300_mount.urdf.xacro" />
   <xacro:include filename="$(find herox_description)/urdf/accessories/hokuyo_ust-10lx_mount.urdf.xacro" />
 
@@ -34,6 +35,21 @@
                              topic="front/scan"
                              location="1" />
   </xacro:if>
+
+  <!-- If enabled, generate the front SICK nanoScan3 LASER payload. -->
+  <xacro:if value="$(optenv HEROX_FRONT_NANOSCAN_LASER 0)">
+    <xacro:sick_nanoscan3_mount prefix="front"
+                             topic="front/scan"
+                             location="1" />
+  </xacro:if>
+
+  <!-- If enabled, generate the rear SICK nanoScan3 LASER payload. -->
+  <xacro:if value="$(optenv HEROX_REAR_NANOSCAN_LASER 0)">
+    <xacro:sick_nanoscan3_mount prefix="rear"
+                             topic="rear/scan"
+                             location="-1" />
+  </xacro:if>
+
 
   <!-- If enabled, generate the rear SICK LMS111 LASER payload. -->
   <xacro:if value="$(optenv RIDGEBACK_REAR_SICK_LASER 0)">
