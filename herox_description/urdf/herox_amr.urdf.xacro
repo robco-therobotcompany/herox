@@ -7,10 +7,14 @@
     <xacro:property name="wheel_y_offset" value="0.1500" />
     <xacro:property name="wheel_x_offset" value="0.2215" />
 
-    <!-- NOTE: This measurement is rough for now! -->
-    <!-- NOTE: Z-offset is not modeled yet! -->
-    <!-- NOTE: Assuming symmetrical placement of lasers -->
-    <xacro:property name="laser_offset" value="0.270" />
+    <xacro:include filename="$(find herox_description)/urdf/accessories/sick_nanoscan3_mount.urdf.xacro" />
+
+    <material name="dark_grey"><color rgba="0.2 0.2 0.2 1.0" /></material>
+    <material name="light_grey"><color rgba="0.4 0.4 0.4 1.0" /></material>
+    <material name="red"><color rgba="0.8 0.0 0.0 1.0" /></material>
+    <material name="white"><color rgba="0.9 0.9 0.9 1.0" /></material>
+    <material name="yellow"><color rgba="0.8 0.8 0.0 1.0" /></material>
+    <material name="black"><color rgba="0.15 0.15 0.15 1.0" /></material>
 
     <xacro:macro name="wheel" params="prefix side *joint_pose">
         <link name="${prefix}_${side}_wheel_link">
@@ -21,14 +25,20 @@
                 </geometry>
           </collision>
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
                 <geometry>
                     <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
                 </geometry>
-                <material name="grey">
-                    <color rgba="0.5 0.5 0.5 1.0" />
-                </material>
+                <material name="dark_grey"/>
             </visual>
+          <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="5.0"/>
+            <inertia
+              ixx="3.3212e-3" ixy="0" ixz="0"
+              iyy="6.6424e-3" iyz="0"
+              izz="3.3212e-3"/>
+          </inertial>
         </link>
 
         <joint name="${prefix}_${side}_wheel" type="continuous">
@@ -51,53 +61,91 @@
         </transmission>
     </xacro:macro>
 
-    <link name="base_link" />
+    <link name="base_link"/>
+    <link name="chassis_top_link">
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.630 0.435 0.130" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.630 0.435 0.130" />
+            </geometry>
+            <material name="light_grey" />
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="10.0"/>
+            <inertia
+                ixx="4.4744" ixy="0.03098" ixz="0.003647"
+                iyy="7.1624" iyz="0.1228"
+                izz="4.6155"/>
+        </inertial>
+    </link>
+    <link name="chassis_bottom_link">
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.230 0.435 0.205" />
+            </geometry>
+        </collision>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="0.230 0.435 0.205" />
+            </geometry>
+            <material name="light_grey" />
+        </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="20.0"/>
+            <inertia
+                ixx="4.4744" ixy="0.03098" ixz="0.003647"
+                iyy="7.1624" iyz="0.1228"
+                izz="4.6155"/>
+        </inertial>
+    </link>
 
-    <xacro:macro name="laser" params="prefix *joint_pose">
-        <link name="${prefix}_laser">
-            <collision>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <box size="0.1006 0.1025 0.0802" />
-                </geometry>
-            </collision>
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <box size="0.1006 0.1025 0.0802" />
-                </geometry>
-                <material name="yellow">
-                    <color rgba="1.0 1.0 0 1.0" />
-                </material>
-            </visual>
-        </link>
+    <joint name="chassis_top_link_joint" type="fixed">
+        <origin xyz="0 0 0.280" rpy="0 0 0"/>
+        <parent link="base_link"/>
+        <child link="chassis_top_link"/>
+    </joint>
 
-        <joint name="${prefix}_laser_joint" type="fixed">
-            <parent link="base_link"/>
-            <child link="${prefix}_laser"/>
-            <xacro:insert_block name="joint_pose"/>
-        </joint>
-    </xacro:macro>
+    <joint name="chassis_bottom_link_joint" type="fixed">
+        <origin xyz="0 0 0.1125" rpy="0 0 0"/>
+        <parent link="base_link"/>
+        <child link="chassis_bottom_link"/>
+    </joint>
 
     <!-- Wheels -->
     <xacro:wheel prefix="front" side="left">
-      <origin xyz="${wheel_x_offset} ${wheel_y_offset} 0" rpy="0 0 0" />
+        <origin xyz="${wheel_x_offset} ${wheel_y_offset} ${wheel_radius}" rpy="0 0 0" />
     </xacro:wheel>
     <xacro:wheel prefix="front" side="right">
-      <origin xyz="${wheel_x_offset} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
+        <origin xyz="${wheel_x_offset} ${-(wheel_y_offset)} ${wheel_radius}" rpy="0 0 0" />
     </xacro:wheel>
     <xacro:wheel prefix="rear" side="left">
-      <origin xyz="${-(wheel_x_offset)} ${wheel_y_offset} 0" rpy="0 0 0" />
+        <origin xyz="${-(wheel_x_offset)} ${wheel_y_offset} ${wheel_radius}" rpy="0 0 0" />
     </xacro:wheel>
     <xacro:wheel prefix="rear" side="right">
-      <origin xyz="${-(wheel_x_offset)} ${-(wheel_y_offset)} 0" rpy="0 0 0" />
+        <origin xyz="${-(wheel_x_offset)} ${-(wheel_y_offset)} ${wheel_radius}" rpy="0 0 0" />
     </xacro:wheel>
 
     <!-- Lasers -->
-    <xacro:laser prefix="front">
-	    <origin xyz="${laser_offset} 0 0" rpy="${PI} 0 0" />
-    </xacro:laser>
-    <xacro:laser prefix="rear">
-	    <origin xyz="${-(laser_offset)} 0 0" rpy="${PI} 0 ${PI}" />
-    </xacro:laser>
+    <xacro:sick_nanoscan3_mount prefix="front"
+                 topic="front/scan"
+                 location="1" />
+
+    <xacro:sick_nanoscan3_mount prefix="rear"
+                 topic="rear/scan"
+                 location="-1" />
+
+
+
+    <!-- Bring in simulation data for Gazebo -->
+    <xacro:include filename="$(find herox_description)/urdf/herox.gazebo" />
 </robot>
