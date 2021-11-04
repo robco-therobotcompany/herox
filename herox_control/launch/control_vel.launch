@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!-- Uses JointGroupVelocityController to allow individual control of wheels -->
+<launch>
+    <!-- Controller configuration -->
+    <rosparam command="load" file="$(find herox_control)/config/control_vel.yaml" />
+
+    <!-- Controllers -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner"
+        args="herox_joint_publisher herox_velocity_controller herox_velocity_controller2" />
+
+    <node name="driver_init" pkg="rosservice" type="rosservice" args="call --wait /driver/init" />
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" />
+
+    <node pkg="topic_tools" type="relay" name="cmd_vel_relay"
+        args="cmd_vel herox_velocity_controller/cmd_vel" />
+</launch>

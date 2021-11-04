@@ -1,0 +1,13 @@
+# Allows controlling the individual wheels
+herox_joint_publisher:
+  type: "joint_state_controller/JointStateController"
+  publish_rate: 50
+
+herox_velocity_controller:
+  type: velocity_controllers/JointGroupVelocityController
+  joints:
+    - front_left_wheel
+    - front_right_wheel
+    - rear_left_wheel
+    - rear_right_wheel
+  required_drive_mode: 2
