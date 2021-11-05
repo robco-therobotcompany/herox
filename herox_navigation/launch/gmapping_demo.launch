@@ -1,5 +1,5 @@
 <launch>
-  <arg name="scan_topic" default="front/scan" />
+  <arg name="scan_topic" default="/scan_multi" />
 
   <!--- Run gmapping -->
   <include file="$(find herox_navigation)/launch/include/gmapping.launch">
