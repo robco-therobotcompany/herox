@@ -16,6 +16,7 @@
     <node pkg="teleop_twist_joy" type="teleop_node" name="teleop_twist_joy">
       <remap from="cmd_vel" to="/cmd_vel" />
     </node>
+    <node pkg="herox_control" type="joystick_estop.py" name="joystick_estop" output="screen"/>
   </group>
 
   <arg name="config" default="planar" />

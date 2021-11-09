@@ -5,26 +5,23 @@ import roslaunch
 from herox_coordinator.msg import SubsystemStatus, SubsystemStatusSingle
 from herox_coordinator.srv import SubsystemControl, SubsystemControlResponse
 
-hwState = False
-ctrlState = False
+baseState = False
 navState = False
 teleopState = False
 
+baseLaunch = None
 navLaunch = None
+teleopLaunch = None
 
 # Service handler
 def handle_subsystem_control(req):
-    global hwState
-    global ctrlState
+    global baseState
     global navState
     global teleopState
-    global navLaunch
 
     rospy.loginfo(req)
-    if req.name == "HW":
-        hwState = req.status
-    elif req.name == "CTRL":
-        ctrlState = req.status
+    if req.name == "BASE":
+        baseState = req.status
     elif req.name == "NAV":
         navState = req.status
     elif req.name == "TELEOP":
@@ -33,14 +30,13 @@ def handle_subsystem_control(req):
     return SubsystemControlResponse()
 
 def coordinator():
-    global hwState
-    global ctrlState
+    global baseState
     global navState
     global teleopState
     global navLaunch
 
     rospy.init_node('herox_coordinator')
-    pub = rospy.Publisher('subsystem_status', SubsystemStatus)
+    pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
     srv = rospy.Service('subsystem_control', SubsystemControl, handle_subsystem_control)
 
     r = rospy.Rate(1)
@@ -48,13 +44,8 @@ def coordinator():
     subs = []
     
     sub = SubsystemStatusSingle()
-    sub.name = "HW"
+    sub.name = "BASE"
     subs.append(sub)
-
-    sub = SubsystemStatusSingle()
-    sub.name = "CTRL"
-    subs.append(sub)
-
 
     sub = SubsystemStatusSingle()
     sub.name = "NAV"
@@ -68,18 +59,24 @@ def coordinator():
     msg.subsystems = subs
 
     while not rospy.is_shutdown():
-        if navState and navLaunch == None:
-            navLaunch = start_launchfile("/home/ros/catkin_ws/src/herox/herox_navigation/launch/gmapping_demo.launch")
-        if not navState and navLaunch != None:
-            stop_launchfile(navLaunch)
-            navLaunch = None
+        navLaunch = sync_state(baseState, baseLaunch, "/home/nvidia/catkin_ws/src/herox_robot/herox_base/launch/base.launch")
+        navLaunch = sync_state(navState, navLaunch, "/home/nvidia/catkin_ws/src/herox/herox_navigation/launch/gmapping_demo.launch")
+        navLaunch = sync_state(teleopState, teleopLaunch, "/home/nvidia/catkin_ws/src/herox/herox_control/launch/gmapping_demo.launch")
 
-        msg.subsystems[0].status = hwState
-        msg.subsystems[1].status = ctrlState
-        msg.subsystems[2].status = navState
-        msg.subsystems[3].status = teleopState
+        msg.subsystems[0].status = baseState
+        msg.subsystems[1].status = navState
+        msg.subsystems[2].status = teleopState
         pub.publish(msg)
         r.sleep()
+
+def sync_state(state, launchobj, launchfile):
+  if state and launchobj == None:
+    return start_launchfile(launchfile)
+  if not state and launchobj != None:
+    stop_launchfile(launchobj)
+    return None
+  
+  return launchobj
 
 def start_launchfile(filename):
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)

@@ -144,6 +144,14 @@
                  topic="rear/scan"
                  location="-1" />
 
+    <!-- Camera -->
+    <link name="camera_link" />
+    <joint name="camera_joint" type="fixed">
+      <origin xyz="-0.120 0 0.360" rpy="${-PI/2} 0 ${PI/2}"/>
+      <parent link="base_link"/>
+      <child link="camera_link"/>
+    </joint>
+
 
 
     <!-- Bring in simulation data for Gazebo -->

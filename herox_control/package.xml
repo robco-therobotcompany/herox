@@ -15,6 +15,7 @@
   <depend>nav_msgs</depend>
   <depend>tf</depend>
   <depend>urdf</depend>
+  <depend>std_srvs</depend>
 
   <exec_depend>interactive_marker_twist_server</exec_depend>
   <exec_depend>joint_state_controller</exec_depend>
