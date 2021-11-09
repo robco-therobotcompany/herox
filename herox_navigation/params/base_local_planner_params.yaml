@@ -13,7 +13,7 @@ TrajectoryPlannerROS:
 
   max_vel_theta: 0.5
   min_vel_theta: -0.5
-  min_in_place_vel_theta: 0.1
+  #min_in_place_vel_theta: 0.1
 
   holonomic_robot: true
   #escape_vel: -0.15
@@ -21,20 +21,22 @@ TrajectoryPlannerROS:
   # Goal Tolerance Parameters
   yaw_goal_tolerance: 0.157
   xy_goal_tolerance: 0.25
-  latch_xy_goal_tolerance: false
+  #latch_xy_goal_tolerance: false
 
   # Forward Simulation Parameters
   sim_time: 2.0
-  sim_granularity: 0.05
+  sim_granularity: 0.025
   angular_sim_granularity: 0.05
-  vx_samples: 8
-  vy_samples: 8
-  vtheta_samples: 15
+  vx_samples: 20
+  vy_samples: 20
+  vtheta_samples: 40
   controller_frequency: 5.0
 
   # Trajectory scoring parameters
-  #meter_scoring: true # Whether the gdist_scale and pdist_scale parameters should assume that goal_distance and path_distance are expressed in units of meters or cells. Cells are assumed by default (false).
-  #occdist_scale:  0.01 #The weighting for how much the controller should attempt to avoid obstacles. default 0.01
+  meter_scoring: true # Whether the gdist_scale and pdist_scale parameters should assume that goal_distance and path_distance are expressed in units of meters or cells. Cells are assumed by default (false).
+  occdist_scale:  0.02 #The weighting for how much the controller should attempt to avoid obstacles. default 0.01
+  path_distance_bias: 32.0
+  goal_distance_bias: 20.0
   #pdist_scale: 0.6  #     The weighting for how much the controller should stay close to the path it was given . default 0.6
   #gdist_scale: 0.8 #     The weighting for how much the controller should attempt to reach its local goal, also controls speed  default 0.8
 
@@ -43,7 +45,7 @@ TrajectoryPlannerROS:
   #heading_scoring_timestep: 0.8   #How far to look ahead in time in seconds along the simulated trajectory when using heading scoring (double, default: 0.8)
   dwa: true #Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout
   #simple_attractor: false
-  #publish_cost_grid_pc: true
+  publish_cost_grid_pc: true
 
   #Oscillation Prevention Parameters
   #oscillation_reset_dist: 0.05 #How far the robot must travel in meters before oscillation flags are reset (double, default: 0.05)

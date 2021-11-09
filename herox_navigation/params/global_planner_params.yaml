@@ -1,0 +1,4 @@
+GlobalPlanner:
+  neutral_cost: 50
+  cost_factor: 3
+  lethal_cost: 253
