@@ -17,4 +17,5 @@ global_costmap:
   - {name: inflater_layer, type: "costmap_2d::InflationLayer"}
 
   inflater_layer:
-   inflation_radius: 0.35
+   cost_scaling_factor: 22.0
+   inflation_radius: 0.6
