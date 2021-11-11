@@ -11,7 +11,7 @@ transform_tolerance: 0.5
 meter_scoring: true
 
 footprint: [[0.32, -0.22], [0.32, 0.22], [-0.32, 0.22], [-0.32, -0.22]]
-footprint_padding: 0.03
+footprint_padding: 0.1
 
 obstacles_layer:
   observation_sources: scan
