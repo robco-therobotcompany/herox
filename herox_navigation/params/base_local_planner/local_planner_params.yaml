@@ -3,7 +3,7 @@ TrajectoryPlannerROS:
   # Robot Configuration Parameters
   acc_lim_x: 1.5
   acc_lim_y: 1.5
-  acc_lim_theta:  1.0
+  acc_lim_theta:  10.0 # Set to 10 to prevent unnecessary in-place rotation, this seems to work for some reason...
 
   max_vel_x: 0.2
   min_vel_x: 0.1

@@ -1,5 +1,6 @@
 <launch>
-  <arg name="scan_topic" default="/laser_BX1/scan" />
+  <arg name="scan_topic" default="/scan" />
+  <arg name="configuration" default="dwa_local_planner"/>
 
   <!-- Run the map server -->
   <arg name="map_file" default="$(find herox_navigation)/maps/ridgeback_race.yaml"/>
@@ -17,6 +18,8 @@
   </include>
 
   <!--- Run Move Base -->
-  <include file="$(find herox_navigation)/launch/include/move_base.launch" />
+  <include file="$(find herox_navigation)/launch/include/move_base.launch">
+    <arg name="configuration" value="$(arg configuration)" />
+  </include>
 
 </launch>
