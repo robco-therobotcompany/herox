@@ -33,7 +33,9 @@ def coordinator():
     global baseState
     global navState
     global teleopState
+    global baseLaunch
     global navLaunch
+    global teleopLaunch
 
     rospy.init_node('herox_coordinator')
     pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
@@ -58,10 +60,11 @@ def coordinator():
     msg = SubsystemStatus()
     msg.subsystems = subs
 
+    print("Coordinator initialized.")
     while not rospy.is_shutdown():
-        navLaunch = sync_state(baseState, baseLaunch, "/home/nvidia/catkin_ws/src/herox_robot/herox_base/launch/base.launch")
-        navLaunch = sync_state(navState, navLaunch, "/home/nvidia/catkin_ws/src/herox/herox_navigation/launch/gmapping_demo.launch")
-        navLaunch = sync_state(teleopState, teleopLaunch, "/home/nvidia/catkin_ws/src/herox/herox_control/launch/gmapping_demo.launch")
+        baseLaunch = sync_state(baseState, baseLaunch, "/home/nvidia/catkin_ws/src/herox_robot/herox_base/launch/base.launch")
+        navLaunch = sync_state(navState, navLaunch, "/home/nvidia/catkin_ws/src/herox/herox_navigation/launch/amcl_demo.launch")
+        teleopLaunch = sync_state(teleopState, teleopLaunch, "/home/nvidia/catkin_ws/src/herox/herox_control/launch/teleop.launch")
 
         msg.subsystems[0].status = baseState
         msg.subsystems[1].status = navState

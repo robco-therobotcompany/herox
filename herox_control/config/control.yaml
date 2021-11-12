@@ -18,8 +18,8 @@ herox_velocity_controller:
   required_drive_mode: 2
 
   # Override URDF look-up for wheel separation since the parent link is not the base_link.
-  #wheel_separation_x: 0.638
-  #wheel_separation_y: 0.551
+  wheel_separation_x: 0.300 # Actual value: 0.300
+  wheel_separation_y: 0.443 # Actual value: 0.443
 
   # Odometry fused with IMU is published by robot_localization, so
   # no need to publish a TF based on encoders alone.
@@ -47,7 +47,7 @@ herox_velocity_controller:
       has_velocity_limits    : true
       max_velocity           : 0.75   # rad/s
       has_acceleration_limits: true
-      max_acceleration       : 1.0   # rad/s^2
+      max_acceleration       : 0.75   # rad/s^2
 
 ekf_localization:
   frequency: 50
