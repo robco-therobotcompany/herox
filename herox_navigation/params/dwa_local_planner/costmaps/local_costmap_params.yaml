@@ -14,5 +14,5 @@ local_costmap:
   - {name: inflater_layer, type: "costmap_2d::InflationLayer"}
 
   inflater_layer:
-   inflation_radius: 0.45
-   cost_scaling_factor: 18.0
+   inflation_radius: 0.5
+   cost_scaling_factor: 10.0
