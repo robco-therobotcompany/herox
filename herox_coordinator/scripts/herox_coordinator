@@ -100,6 +100,15 @@ def handle_move_base_done(state, result):
 
   if state != actionlib.GoalStatus.SUCCEEDED:
     rospy.loginfo("move_base FAILED on waypoint %d!", currentMission.currentGoal)
+    return
+
+  nextWP = currentMission.next_waypoint()
+  if nextWP is None:
+    print('Mission finished')
+    return
+  
+  print('Sending waypoint ' + str(currentMission.currentGoal))
+  send_waypoint(nextWP.pose)
 
 #
 # HELPERS
