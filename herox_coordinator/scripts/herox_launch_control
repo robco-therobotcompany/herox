@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+
+#
+# HEROX Launch Control
+# Allows remote starting/stopping of launchfiles.
+#
+
+import rospy
+import roslaunch
+from herox_coordinator.msg import SubsystemStatus, SubsystemStatusSingle
+from herox_coordinator.srv import SubsystemControl, SubsystemControlResponse
+
+baseState = False
+navState = False
+teleopState = False
+
+baseLaunch = None
+navLaunch = None
+teleopLaunch = None
+
+# Service handler
+def handle_subsystem_control(req):
+    global baseState
+    global navState
+    global teleopState
+
+    rospy.loginfo(req)
+    if req.name == "BASE":
+        baseState = req.status
+    elif req.name == "NAV":
+        navState = req.status
+    elif req.name == "TELEOP":
+        teleopState = req.status
+    
+    return SubsystemControlResponse()
+
+def launch_control():
+    global baseState
+    global navState
+    global teleopState
+    global baseLaunch
+    global navLaunch
+    global teleopLaunch
+
+    rospy.init_node('herox_launch_control')
+    pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
+    srv = rospy.Service('subsystem_control', SubsystemControl, handle_subsystem_control)
+
+    r = rospy.Rate(1)
+
+    subs = []
+    
+    sub = SubsystemStatusSingle()
+    sub.name = "BASE"
+    subs.append(sub)
+
+    sub = SubsystemStatusSingle()
+    sub.name = "NAV"
+    subs.append(sub)
+
+    sub = SubsystemStatusSingle()
+    sub.name = "TELEOP"
+    subs.append(sub)
+
+    msg = SubsystemStatus()
+    msg.subsystems = subs
+
+    print("Launch Control initialized.")
+    while not rospy.is_shutdown():
+        baseLaunch = sync_state(baseState, baseLaunch, "/home/nvidia/catkin_ws/src/herox_robot/herox_base/launch/base.launch")
+        navLaunch = sync_state(navState, navLaunch, "/home/nvidia/catkin_ws/src/herox/herox_navigation/launch/amcl_demo.launch")
+        teleopLaunch = sync_state(teleopState, teleopLaunch, "/home/nvidia/catkin_ws/src/herox/herox_control/launch/teleop.launch")
+
+        msg.subsystems[0].status = baseState
+        msg.subsystems[1].status = navState
+        msg.subsystems[2].status = teleopState
+        pub.publish(msg)
+        r.sleep()
+
+# Starts/stops the given launchfile if state doesn't match actual state
+def sync_state(state, launchobj, launchfile):
+  if state and launchobj == None:
+    return start_launchfile(launchfile)
+  if not state and launchobj != None:
+    stop_launchfile(launchobj)
+    return None
+  
+  return launchobj
+
+def start_launchfile(filename):
+    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+    roslaunch.configure_logging(uuid)
+    launch = roslaunch.parent.ROSLaunchParent(uuid, [filename])
+    launch.start()
+    rospy.loginfo("Started launchfile %s"%filename)
+    return launch
+
+def stop_launchfile(launch):
+    rospy.loginfo("Shutting down launchfile")
+    launch.shutdown()
+
+if __name__ == '__main__':
+    try:
+        launch_control()
+    except rospy.ROSInterruptException: pass

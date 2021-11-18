@@ -1,99 +1,166 @@
 #!/usr/bin/env python
 
+#
+# HEROX Coordinator
+# Implements
+#   1) Mission management (teach waypoints, store/load missions, execute mission by sending goals to move_base)
+#   2) Benchmark execution (run mission X times, measure and store accuracy at each waypoint using AprilTags)
+#
+
 import rospy
-import roslaunch
-from herox_coordinator.msg import SubsystemStatus, SubsystemStatusSingle
-from herox_coordinator.srv import SubsystemControl, SubsystemControlResponse
+import rosbag
+import actionlib
+import tf
+from mission import Mission
+from geometry_msgs.msg import Pose
+from std_srvs.srv import Trigger
+from herox_coordinator.srv import NewMission, LoadMission, SaveMission
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from actionlib_msgs.msg import GoalID
 
-baseState = False
-navState = False
-teleopState = False
+currentMission = Mission()
 
-baseLaunch = None
-navLaunch = None
-teleopLaunch = None
+#
+# SERVICE HANDLERS
+#
+def handle_load_mission(request):
+  global currentMission
 
-# Service handler
-def handle_subsystem_control(req):
-    global baseState
-    global navState
-    global teleopState
+  print('Loading mission ' + request.name + '...')
+  bag = rosbag.Bag(request.name)
+  currentMission = Mission(bag)
+  bag.close()
+  return True
 
-    rospy.loginfo(req)
-    if req.name == "BASE":
-        baseState = req.status
-    elif req.name == "NAV":
-        navState = req.status
-    elif req.name == "TELEOP":
-        teleopState = req.status
-    
-    return SubsystemControlResponse()
+def handle_new_mission(request):
+  global currentMission
 
-def coordinator():
-    global baseState
-    global navState
-    global teleopState
-    global baseLaunch
-    global navLaunch
-    global teleopLaunch
-
-    rospy.init_node('herox_coordinator')
-    pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
-    srv = rospy.Service('subsystem_control', SubsystemControl, handle_subsystem_control)
-
-    r = rospy.Rate(1)
-
-    subs = []
-    
-    sub = SubsystemStatusSingle()
-    sub.name = "BASE"
-    subs.append(sub)
-
-    sub = SubsystemStatusSingle()
-    sub.name = "NAV"
-    subs.append(sub)
-
-    sub = SubsystemStatusSingle()
-    sub.name = "TELEOP"
-    subs.append(sub)
-
-    msg = SubsystemStatus()
-    msg.subsystems = subs
-
-    print("Coordinator initialized.")
-    while not rospy.is_shutdown():
-        baseLaunch = sync_state(baseState, baseLaunch, "/home/nvidia/catkin_ws/src/herox_robot/herox_base/launch/base.launch")
-        navLaunch = sync_state(navState, navLaunch, "/home/nvidia/catkin_ws/src/herox/herox_navigation/launch/amcl_demo.launch")
-        teleopLaunch = sync_state(teleopState, teleopLaunch, "/home/nvidia/catkin_ws/src/herox/herox_control/launch/teleop.launch")
-
-        msg.subsystems[0].status = baseState
-        msg.subsystems[1].status = navState
-        msg.subsystems[2].status = teleopState
-        pub.publish(msg)
-        r.sleep()
-
-def sync_state(state, launchobj, launchfile):
-  if state and launchobj == None:
-    return start_launchfile(launchfile)
-  if not state and launchobj != None:
-    stop_launchfile(launchobj)
-    return None
+  print('Creating new mission...')
+  currentMission = Mission()
+  return True
   
-  return launchobj
+def handle_save_mission(request):
+  global currentMission
 
-def start_launchfile(filename):
-    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-    roslaunch.configure_logging(uuid)
-    launch = roslaunch.parent.ROSLaunchParent(uuid, [filename])
-    launch.start()
-    rospy.loginfo("Started launchfile %s"%filename)
-    return launch
+  print('Saving current mission to ' + request.name)
+  bag = rosbag.Bag(request.name, 'w')
+  currentMission.save_to_bag(bag)
+  bag.close()
+  return True
 
-def stop_launchfile(launch):
-    rospy.loginfo("Shutting down launchfile")
-    launch.shutdown()
+def handle_start_mission(request):
+  global currentMission
+
+  print('Starting mission.')
+
+  # Reset mission waypoint counter
+  currentMission.reset()
+
+  # Send first goal to move_base
+  send_waypoint(currentMission.next_waypoint().pose)
+  return (True, "")
+
+def handle_add_waypoint(request):
+  global currentMission
+
+  print('Adding waypoint at current pose')
+  pose = get_robot_pose()
+  currentMission.add_waypoint(pose)
+  return (True, "")
+
+def handle_stop_mission(request):
+  global currentMission
+  global mbClient
+
+  print('Stopping mission.')
+  mbClient.cancel_all_goals()
+  return (True, "")
+  
+#
+# SUBSCRIBER HANDLERS
+#
+def handle_new_waypoint(msg):
+  global currentMission
+
+  rospy.loginfo("Got new waypoint: %f,%f,%f %f,%f,%f,%f", msg.position.x, msg.position.y, msg.position.z, msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w)
+  currentMission.add_waypoint(msg)
+
+#
+# ACTION CALLBACK HANDLERS
+#
+def handle_move_base_feedback(fb):
+  rospy.loginfo("Got feedback: %s", str(fb))
+
+def handle_move_base_done(state, result):
+  global currentMission
+
+  rospy.loginfo("move_base is done")
+  rospy.loginfo("State: %s", str(state))
+  rospy.loginfo("Result: %s", str(result))
+
+  if state != actionlib.GoalStatus.SUCCEEDED:
+    rospy.loginfo("move_base FAILED on waypoint %d!", currentMission.currentGoal)
+
+#
+# HELPERS
+#
+
+def send_waypoint(pose):
+  global mbClient
+
+  goal = MoveBaseGoal()
+  goal.target_pose.header.frame_id = "map"
+  goal.target_pose.header.stamp = rospy.Time.now()
+  goal.target_pose.pose = pose
+
+  mbClient.send_goal(goal, done_cb=handle_move_base_done)
+
+def get_robot_pose():
+  global tfListener
+  
+  (trans, rot) = tfListener.lookupTransform('/map', '/base_link', rospy.Time(0))
+  pose = Pose()
+  pose.position.x = trans[0]
+  pose.position.y = trans[1]
+  pose.position.z = trans[2]
+  pose.orientation.x = rot[0]
+  pose.orientation.y = rot[1]
+  pose.orientation.z = rot[2]
+  pose.orientation.w = rot[3]
+
+  return pose
+
+#
+# MAIN FUNCTION
+#
+def coordinator_main():
+  global loadSrv, newSrv, saveSrv, startSrv, stopSrv, wpSrv
+  global wpSub
+  global mbClient
+  global tfListener
+
+  rospy.init_node('herox_coordinator')
+  #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
+  loadSrv = rospy.Service('load_mission', LoadMission, handle_load_mission)
+  newSrv = rospy.Service('new_mission', NewMission, handle_new_mission)
+  saveSrv = rospy.Service('save_mission', SaveMission, handle_save_mission)
+  startSrv = rospy.Service('start_mission', Trigger, handle_start_mission)
+  stopSrv = rospy.Service('stop_mission', Trigger, handle_stop_mission)
+  wpSrv = rospy.Service('add_waypoint', Trigger, handle_add_waypoint)
+
+  wpSub = rospy.Subscriber('mission_waypoints', Pose, handle_new_waypoint)
+
+  mbClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+
+  tfListener = tf.TransformListener()
+
+  r = rospy.Rate(5)
+
+  print("Coordinator initialized.")
+  while not rospy.is_shutdown():
+      r.sleep()
 
 if __name__ == '__main__':
-    try:
-        coordinator()
-    except rospy.ROSInterruptException: pass
+  try:
+      coordinator_main()
+  except rospy.ROSInterruptException: pass

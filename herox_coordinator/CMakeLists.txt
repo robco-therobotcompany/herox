@@ -56,6 +56,9 @@ add_message_files(
 add_service_files(
   FILES
   SubsystemControl.srv
+  LoadMission.srv
+  NewMission.srv
+  SaveMission.srv
 )
 
 ## Generate actions in the 'action' folder
