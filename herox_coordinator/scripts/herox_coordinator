@@ -31,7 +31,7 @@ def handle_load_mission(request):
   global currentMission
 
   print('Loading mission ' + request.name + '...')
-  bag = rosbag.Bag(request.name)
+  bag = rosbag.Bag(os.path.join(missionsPath, request.name))
   currentMission = Mission(bag)
   bag.close()
   return True
@@ -73,6 +73,10 @@ def handle_start_mission(request):
   currentMission.reset()
 
   # Send first goal to move_base
+  wp = currentMission.next_waypoint()
+  if wp is None:
+    return(False,"Failed to start mission, no waypoint was returned")
+
   send_waypoint(currentMission.next_waypoint().pose)
   return (True, "")
 

@@ -18,6 +18,7 @@ class Mission:
   def next_waypoint(self):
     self.currentGoal = self.currentGoal + 1
     if self.currentGoal >= len(self.waypoints):
+      self.currentGoal = len(self.waypoints)
       return None
 
     return self.waypoints[self.currentGoal]
