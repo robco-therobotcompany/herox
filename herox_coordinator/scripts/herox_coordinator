@@ -7,18 +7,22 @@
 #   2) Benchmark execution (run mission X times, measure and store accuracy at each waypoint using AprilTags)
 #
 
+import os
 import rospy
 import rosbag
 import actionlib
 import tf
+import glob
 from mission import Mission
 from geometry_msgs.msg import Pose
 from std_srvs.srv import Trigger
+from herox_coordinator.msg import Missions
 from herox_coordinator.srv import NewMission, LoadMission, SaveMission
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID
 
 currentMission = Mission()
+missionsPath = 'herox_coordinator/missions'
 
 #
 # SERVICE HANDLERS
@@ -38,14 +42,26 @@ def handle_new_mission(request):
   print('Creating new mission...')
   currentMission = Mission()
   return True
+
+def get_missions():
+  return [os.path.basename(p) for p in glob.glob(os.path.join(missionsPath, '*.bag'))]
+
+def publish_missions():
+  global missionPub
+
+  missionsMsg = Missions()
+  missionsMsg.missions = get_missions()
+  missionPub.publish(missionsMsg)
   
 def handle_save_mission(request):
   global currentMission
 
   print('Saving current mission to ' + request.name)
-  bag = rosbag.Bag(request.name, 'w')
+  filename = os.path.join(missionsPath, request.name)
+  bag = rosbag.Bag(filename, 'w')
   currentMission.save_to_bag(bag)
   bag.close()
+  publish_missions()
   return True
 
 def handle_start_mission(request):
@@ -147,6 +163,7 @@ def coordinator_main():
   global wpSub
   global mbClient
   global tfListener
+  global missionPub
 
   rospy.init_node('herox_coordinator')
   #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
@@ -157,15 +174,21 @@ def coordinator_main():
   stopSrv = rospy.Service('stop_mission', Trigger, handle_stop_mission)
   wpSrv = rospy.Service('add_waypoint', Trigger, handle_add_waypoint)
 
+  missionPub = rospy.Publisher('missions', Missions, queue_size=1, latch=True)
   wpSub = rospy.Subscriber('mission_waypoints', Pose, handle_new_waypoint)
 
   mbClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
   tfListener = tf.TransformListener()
 
-  r = rospy.Rate(5)
+  # Ensure missions directory exists
+  if not os.path.exists(missionsPath):
+    os.makedirs(missionsPath)
+
+  publish_missions()
 
   print("Coordinator initialized.")
+  r = rospy.Rate(5)
   while not rospy.is_shutdown():
       r.sleep()
 

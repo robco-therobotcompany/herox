@@ -18,6 +18,50 @@ baseLaunch = None
 navLaunch = None
 teleopLaunch = None
 
+class Subsystem:
+  def __init__(self, name, launchfile):
+    self.name = name
+    self.launchfile = launchfile
+    self.status = False
+    self.launch_obj = None
+
+  def update(self):
+    if self.status:
+      self.start()
+    else:
+      self.stop()
+
+  def start(self):
+      if self.launch_obj is not None:
+        return
+
+      uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+      roslaunch.configure_logging(uuid)
+      self.launch_obj = roslaunch.parent.ROSLaunchParent(uuid, [self.launchfile])
+      self.launch_obj.start()
+      rospy.loginfo("Started launchfile %s"%self.name)
+
+  def stop(self):
+      if self.launch_obj is None:
+        return
+
+      rospy.loginfo("Shutting down launchfile %s"%self.name)
+      self.launch_obj.shutdown()
+      self.launch_obj = None
+    
+
+base_path = "/home/nvidia/catkin_ws/src/"
+
+subsystems = [
+  Subsystem("MOT", base_path + "herox_robot/herox_base/launch/motors.launch"),
+  Subsystem("CTRL", base_path + "herox/herox_control/launch/control.launch"),
+  Subsystem("LASER", base_path + "herox_robot/herox_base/launch/lasers.launch"),
+  Subsystem("TELEOP", base_path + "herox/herox_control/launch/teleop.launch"),
+  Subsystem("NAV", base_path + "herox/herox_navigation/launch/amcl_demo.launch"),
+  Subsystem("COORD", base_path + "herox/herox_coordinator/launch/coordinator.launch")
+]
+  
+
 # Service handler
 def handle_subsystem_control(req):
     global baseState
@@ -25,12 +69,10 @@ def handle_subsystem_control(req):
     global teleopState
 
     rospy.loginfo(req)
-    if req.name == "BASE":
-        baseState = req.status
-    elif req.name == "NAV":
-        navState = req.status
-    elif req.name == "TELEOP":
-        teleopState = req.status
+
+    for s in subsystems:
+      if s.name == req.name:
+        s.status = req.status
     
     return SubsystemControlResponse()
 
@@ -49,55 +91,23 @@ def launch_control():
     r = rospy.Rate(1)
 
     subs = []
-    
-    sub = SubsystemStatusSingle()
-    sub.name = "BASE"
-    subs.append(sub)
-
-    sub = SubsystemStatusSingle()
-    sub.name = "NAV"
-    subs.append(sub)
-
-    sub = SubsystemStatusSingle()
-    sub.name = "TELEOP"
-    subs.append(sub)
+    for s in subsystems:
+      status = SubsystemStatusSingle()
+      status.name = s.name
+      subs.append(status)
 
     msg = SubsystemStatus()
     msg.subsystems = subs
 
     print("Launch Control initialized.")
     while not rospy.is_shutdown():
-        baseLaunch = sync_state(baseState, baseLaunch, "/home/nvidia/catkin_ws/src/herox_robot/herox_base/launch/base.launch")
-        navLaunch = sync_state(navState, navLaunch, "/home/nvidia/catkin_ws/src/herox/herox_navigation/launch/amcl_demo.launch")
-        teleopLaunch = sync_state(teleopState, teleopLaunch, "/home/nvidia/catkin_ws/src/herox/herox_control/launch/teleop.launch")
+        for i in range(len(subsystems)):
+          subsys = subsystems[i]
+          msg.subsystems[i].status = subsys.status
+          subsys.update()
 
-        msg.subsystems[0].status = baseState
-        msg.subsystems[1].status = navState
-        msg.subsystems[2].status = teleopState
         pub.publish(msg)
         r.sleep()
-
-# Starts/stops the given launchfile if state doesn't match actual state
-def sync_state(state, launchobj, launchfile):
-  if state and launchobj == None:
-    return start_launchfile(launchfile)
-  if not state and launchobj != None:
-    stop_launchfile(launchobj)
-    return None
-  
-  return launchobj
-
-def start_launchfile(filename):
-    uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-    roslaunch.configure_logging(uuid)
-    launch = roslaunch.parent.ROSLaunchParent(uuid, [filename])
-    launch.start()
-    rospy.loginfo("Started launchfile %s"%filename)
-    return launch
-
-def stop_launchfile(launch):
-    rospy.loginfo("Shutting down launchfile")
-    launch.shutdown()
 
 if __name__ == '__main__':
     try:

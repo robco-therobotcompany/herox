@@ -50,6 +50,7 @@ add_message_files(
   FILES
   SubsystemStatus.msg
   SubsystemStatusSingle.msg
+  Missions.msg
 )
 
 ## Generate services in the 'srv' folder

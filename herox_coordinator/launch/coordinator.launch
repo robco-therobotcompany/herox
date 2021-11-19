@@ -1,0 +1,3 @@
+<launch>
+  <node name="herox_coordinator" pkg="herox_coordinator" type="herox_coordinator" output="screen" />
+</launch>
