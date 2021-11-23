@@ -14,6 +14,7 @@ import actionlib
 import tf
 import glob
 from mission import Mission
+from waypoint import MissionWaypoint
 from geometry_msgs.msg import Pose
 from std_srvs.srv import Trigger
 from herox_coordinator.msg import Missions
@@ -77,7 +78,8 @@ def handle_start_mission(request):
   if wp is None:
     return(False,"Failed to start mission, no waypoint was returned")
 
-  send_waypoint(currentMission.next_waypoint().pose)
+  print('Sending waypoint ' + str(currentMission.currentGoal))
+  send_waypoint(wp.pose)
   return (True, "")
 
 def handle_add_waypoint(request):
@@ -122,6 +124,12 @@ def handle_move_base_done(state, result):
     rospy.loginfo("move_base FAILED on waypoint %d!", currentMission.currentGoal)
     return
 
+  # Get measurement
+  rospy.loginfo("Acquiring measurement for waypoint...")
+  rospy.sleep(2)
+  meas = get_measurement(currentMission.get_current_waypoint().tag)
+  rospy.loginfo("Got measurement: %f,%f,%f %f,%f,%f,%f", meas.position.x, meas.position.y, meas.position.z, meas.orientation.x, meas.orientation.y, meas.orientation.z, meas.orientation.w)
+
   nextWP = currentMission.next_waypoint()
   if nextWP is None:
     print('Mission finished')
@@ -144,10 +152,8 @@ def send_waypoint(pose):
 
   mbClient.send_goal(goal, done_cb=handle_move_base_done)
 
-def get_robot_pose():
-  global tfListener
-  
-  (trans, rot) = tfListener.lookupTransform('/map', '/base_link', rospy.Time(0))
+def get_transform_pose(source_frame, target_frame):
+  (trans, rot) = tfListener.lookupTransform(source_frame, target_frame, rospy.Time(0))
   pose = Pose()
   pose.position.x = trans[0]
   pose.position.y = trans[1]
@@ -159,6 +165,13 @@ def get_robot_pose():
 
   return pose
 
+def get_robot_pose():
+  return get_transform_pose('/map', '/base_link')
+
+def get_measurement(tagname):
+  return get_transform_pose('/base_link', '/' + tagname)
+
+
 #
 # MAIN FUNCTION
 #
@@ -168,6 +181,7 @@ def coordinator_main():
   global mbClient
   global tfListener
   global missionPub
+  global tagSub
 
   rospy.init_node('herox_coordinator')
   #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
