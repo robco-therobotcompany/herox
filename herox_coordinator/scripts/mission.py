@@ -8,6 +8,7 @@ import os
 class Mission:
   benchmark = False # True  = benchmark mode, paths are recorded and measurements taken at every waypoint
                     # False = mission-only mode, mission is executed without evaluation
+  name = ""
 
   def __init__(self, bag = None):
     self.waypoints = []

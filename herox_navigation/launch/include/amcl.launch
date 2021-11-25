@@ -14,8 +14,8 @@
     <param name="laser_max_beams" value="720"/>
     <!--<param name="laser_min_range" value="0.1"/>
     <param name="laser_max_range" value="30.0"/>-->
-    <param name="min_particles" value="500"/>
-    <param name="max_particles" value="2000"/>
+    <param name="min_particles" value="250"/>
+    <param name="max_particles" value="1000"/>
     <!-- Maximum error between the true distribution and the estimated distribution. -->
     <param name="kld_err" value="0.05"/>
     <param name="kld_z" value="0.99"/>

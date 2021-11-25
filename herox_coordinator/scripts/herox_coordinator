@@ -18,7 +18,7 @@ from waypoint import MissionWaypoint
 from geometry_msgs.msg import Pose
 from std_srvs.srv import Trigger
 from herox_coordinator.msg import Mission as MissionMessage, Missions as MissionsMessage
-from herox_coordinator.srv import NewMission, LoadMission, SaveMission
+from herox_coordinator.srv import NewMission, LoadMission, SaveMission, WaypointAction
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID
 
@@ -60,7 +60,10 @@ def publish_current_mission():
   global currentMissionPub
   global currentMission
 
-  currentMissionPub.publish(currentMission)
+  msg = MissionMessage()
+  msg.name = currentMission.name
+  msg.waypoints = [wp.get_msg() for wp in currentMission.waypoints]
+  currentMissionPub.publish(msg)
   
 def handle_save_mission(request):
   global currentMission
@@ -106,6 +109,21 @@ def handle_stop_mission(request):
   print('Stopping mission.')
   mbClient.cancel_all_goals()
   return (True, "")
+
+def handle_wp_up(request):
+  global currentMission
+  currentMission.waypoints.insert(request.id - 1, currentMission.waypoints.pop(request.id))
+  return True
+  
+def handle_wp_down(request):
+  global currentMission
+  currentMission.waypoints.insert(request.id + 1, currentMission.waypoints.pop(request.id))
+  return True
+  
+def handle_wp_set_tag(request):
+  global currentMission
+  currentMission.waypoints[request.id].tagname = request.data
+  return True
   
 #
 # SUBSCRIBER HANDLERS
@@ -206,6 +224,9 @@ def coordinator_main():
   startSrv = rospy.Service('start_mission', Trigger, handle_start_mission)
   stopSrv = rospy.Service('stop_mission', Trigger, handle_stop_mission)
   wpSrv = rospy.Service('add_waypoint', Trigger, handle_add_waypoint)
+  rospy.Service('waypoint_up', WaypointAction, handle_wp_up)
+  rospy.Service('waypoint_down', WaypointAction, handle_wp_down)
+  rospy.Service('waypoint_set_tag', WaypointAction, handle_wp_set_tag)
 
   missionPub = rospy.Publisher('missions', MissionsMessage, queue_size=1, latch=True)
   cwpSub = rospy.Subscriber('add_waypoint', Pose, handle_new_waypoint)
