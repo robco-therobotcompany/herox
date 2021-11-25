@@ -1,4 +1,4 @@
-int32 id                              # Waypoint ID
+string id                             # Waypoint ID
 string tagname                        # Name of the AprilTag associated with this waypoint
 geometry_msgs/Pose pose               # Pose of the waypoint on the map
 geometry_msgs/Pose measurementOffset  # Pose of robot at the waypoint relative to apriltag
