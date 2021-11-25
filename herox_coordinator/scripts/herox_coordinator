@@ -17,7 +17,7 @@ from mission import Mission
 from waypoint import MissionWaypoint
 from geometry_msgs.msg import Pose
 from std_srvs.srv import Trigger
-from herox_coordinator.msg import Missions
+from herox_coordinator.msg import Mission as MissionMessage, Missions as MissionsMessage
 from herox_coordinator.srv import NewMission, LoadMission, SaveMission
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID
@@ -35,6 +35,7 @@ def handle_load_mission(request):
   bag = rosbag.Bag(os.path.join(missionsPath, request.name))
   currentMission = Mission(bag)
   bag.close()
+  publish_current_mission()
   return True
 
 def handle_new_mission(request):
@@ -42,6 +43,7 @@ def handle_new_mission(request):
 
   print('Creating new mission...')
   currentMission = Mission()
+  publish_current_mission()
   return True
 
 def get_missions():
@@ -50,9 +52,15 @@ def get_missions():
 def publish_missions():
   global missionPub
 
-  missionsMsg = Missions()
+  missionsMsg = MissionsMessage()
   missionsMsg.missions = get_missions()
   missionPub.publish(missionsMsg)
+
+def publish_current_mission():
+  global currentMissionPub
+  global currentMission
+
+  currentMissionPub.publish(currentMission)
   
 def handle_save_mission(request):
   global currentMission
@@ -88,6 +96,7 @@ def handle_add_waypoint(request):
   print('Adding waypoint at current pose')
   pose = get_robot_pose()
   currentMission.add_waypoint(pose)
+  publish_current_mission()
   return (True, "")
 
 def handle_stop_mission(request):
@@ -106,6 +115,7 @@ def handle_new_waypoint(msg):
 
   rospy.loginfo("Got new waypoint: %f,%f,%f %f,%f,%f,%f", msg.position.x, msg.position.y, msg.position.z, msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w)
   currentMission.add_waypoint(msg)
+  publish_current_mission()
 
 #
 # ACTION CALLBACK HANDLERS
@@ -127,8 +137,12 @@ def handle_move_base_done(state, result):
   # Get measurement
   rospy.loginfo("Acquiring measurement for waypoint...")
   rospy.sleep(2)
-  meas = get_measurement(currentMission.get_current_waypoint().tag)
-  rospy.loginfo("Got measurement: %f,%f,%f %f,%f,%f,%f", meas.position.x, meas.position.y, meas.position.z, meas.orientation.x, meas.orientation.y, meas.orientation.z, meas.orientation.w)
+  try:
+    meas = get_measurement(currentMission.get_current_waypoint().tag)
+    rospy.loginfo("Got measurement: %f,%f,%f %f,%f,%f,%f", meas.position.x, meas.position.y, meas.position.z, meas.orientation.x, meas.orientation.y, meas.orientation.z, meas.orientation.w)
+  except tf.LookupException:
+    rospy.loginfo("Could not acquire measurement for tag '%s' because it was not detected in frame.", currentMission.get_current_waypoint().tag)
+    return
 
   nextWP = currentMission.next_waypoint()
   if nextWP is None:
@@ -182,6 +196,7 @@ def coordinator_main():
   global tfListener
   global missionPub
   global tagSub
+  global currentMissionPub
 
   rospy.init_node('herox_coordinator')
   #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
@@ -192,8 +207,9 @@ def coordinator_main():
   stopSrv = rospy.Service('stop_mission', Trigger, handle_stop_mission)
   wpSrv = rospy.Service('add_waypoint', Trigger, handle_add_waypoint)
 
-  missionPub = rospy.Publisher('missions', Missions, queue_size=1, latch=True)
-  wpSub = rospy.Subscriber('mission_waypoints', Pose, handle_new_waypoint)
+  missionPub = rospy.Publisher('missions', MissionsMessage, queue_size=1, latch=True)
+  cwpSub = rospy.Subscriber('add_waypoint', Pose, handle_new_waypoint)
+  currentMissionPub = rospy.Publisher('current_mission', MissionMessage, queue_size=1, latch=True)
 
   mbClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 

@@ -25,16 +25,16 @@ class MissionWaypoint:
   def increment_visits(self):
     self.visits = self.visits + 1
 
-  def write_to_bag(self, bag):
+  def get_msg(self):
     wp = Waypoint()
     wp.id = self.waypoint_id
     wp.pose = self.pose
     wp.shortestPath = self.shortest_path
     wp.visits = self.visits
     wp.tagname = self.tag
-    bag.write('mission_waypoints', wp)
+    return wp
 
-  def load_from_bag(self, msg):
+  def load_from_msg(self, msg):
     self.waypoint_id = msg.id
     self.pose = msg.pose
     self.shortestPath = msg.shortestPath

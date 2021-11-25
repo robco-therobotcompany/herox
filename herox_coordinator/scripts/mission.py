@@ -2,6 +2,8 @@ import rospy
 import rosbag
 from waypoint import MissionWaypoint
 from geometry_msgs.msg import Pose
+import herox_coordinator.msg as cmsg
+import os
 
 class Mission:
   benchmark = False # True  = benchmark mode, paths are recorded and measurements taken at every waypoint
@@ -43,15 +45,21 @@ class Mission:
 
   def load_from_bag(self, bag):
     self.waypoints = []
-    for topic, msg, t in bag.read_messages(topics=['mission_waypoints']):
-      rospy.loginfo("Loaded waypoint: %f,%f,%f %f,%f,%f,%f", msg.pose.position.x, msg.pose.position.y,
+    for topic, miss, t in bag.read_messages(topics=['mission']):
+      self.name = miss.name
+      for msg in miss.waypoints:
+        rospy.loginfo("Loaded waypoint: %f,%f,%f %f,%f,%f,%f", msg.pose.position.x, msg.pose.position.y,
                                                              msg.pose.position.z, msg.pose.orientation.x,
                                                              msg.pose.orientation.y, msg.pose.orientation.z,
                                                              msg.pose.orientation.w)
-      wp = MissionWaypoint()
-      wp.load_from_bag(msg)
-      self.waypoints.append(wp)
+        wp = MissionWaypoint()
+        wp.load_from_msg(msg)
+        self.waypoints.append(wp)
+      break
 
   def save_to_bag(self, bag):
+    msg = cmsg.Mission()
+    msg.name = self.name
+    msg.waypoints = []
     for wp in self.waypoints:
-      wp.write_to_bag(bag)
+      msg.waypoints.append(wp.get_msg())

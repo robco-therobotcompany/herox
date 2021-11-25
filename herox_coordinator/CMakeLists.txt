@@ -51,6 +51,7 @@ add_message_files(
   FILES
   SubsystemStatus.msg
   SubsystemStatusSingle.msg
+  Mission.msg
   Missions.msg
   Waypoint.msg
   WaypointVisit.msg

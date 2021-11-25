@@ -1,2 +1,2 @@
 string name
-Waypoints[] waypoints
+Waypoint[] waypoints
