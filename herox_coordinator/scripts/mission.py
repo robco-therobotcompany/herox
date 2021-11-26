@@ -16,7 +16,6 @@ class Mission:
 
     if bag is not None:
       self.load_from_bag(bag)
-      self.name = bag.filename
 
   def set_benchmark_mode(self, benchmark_mode):
     self.benchmark = benchmark_mode
@@ -38,8 +37,11 @@ class Mission:
 
     return self.waypoints[self.currentGoal]
 
-  def add_measurement(self, pose):
-    self.waypoints[self.currentGoal].add_measurement(pose)
+  def add_visit(self, pose):
+    self.waypoints[self.currentGoal].add_visit(pose)
+
+  def add_pose_to_path(self, pose):
+    self.waypoints[self.currentGoal].add_pose_to_path(pose)
 
   def reset(self, start_at=0):
     self.currentGoal = start_at - 1
@@ -64,3 +66,4 @@ class Mission:
     msg.waypoints = []
     for wp in self.waypoints:
       msg.waypoints.append(wp.get_msg())
+    bag.write('mission',msg)

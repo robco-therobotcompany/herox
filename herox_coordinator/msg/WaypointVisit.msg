@@ -1,3 +1,3 @@
 time stamp
-geometry_msgs/Pose measurement  # Pose of robot at waypoint relative to ground truth (positioning error)
-geometry_msgs/Pose[] path       # Path taken to reach the waypoint on this visit
+geometry_msgs/Pose measurement    # Pose of tag at waypoint relative to robot (for calculating positioning error)
+geometry_msgs/PoseStamped[] path  # Path taken to reach the waypoint on this visit

@@ -15,12 +15,14 @@ import tf
 import glob
 from mission import Mission
 from waypoint import MissionWaypoint
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseStamped
+from std_msgs.msg import Header
 from std_srvs.srv import Trigger
 from herox_coordinator.msg import Mission as MissionMessage, Missions as MissionsMessage
 from herox_coordinator.srv import NewMission, LoadMission, SaveMission, WaypointAction
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID
+from apriltag_ros.msg import AprilTagDetectionArray
 
 currentMission = Mission()
 missionsPath = 'herox_coordinator/missions'
@@ -78,11 +80,15 @@ def handle_save_mission(request):
 
 def handle_start_mission(request):
   global currentMission
+  global poseTimer
 
   print('Starting mission.')
 
   # Reset mission waypoint counter
   currentMission.reset()
+
+  # Start timer for pose recording
+  poseTimer = rospy.Timer(rospy.Duration(0.2), poseTimerCallback)
 
   # Send first goal to move_base
   wp = currentMission.next_waypoint()
@@ -98,13 +104,24 @@ def handle_add_waypoint(request):
 
   print('Adding waypoint at current pose')
   pose = get_robot_pose()
-  currentMission.add_waypoint(pose)
+  tag = get_current_tag()
+  if tag is None:
+    print('No tag in frame! Waypoint not added.')
+    return
+
+  measurement = get_measurement(tag)
+  currentMission.add_waypoint(pose, measurement)
   publish_current_mission()
   return (True, "")
 
 def handle_stop_mission(request):
   global currentMission
   global mbClient
+  global poseTimer
+
+  if poseTimer is not None:
+    poseTimer.shutdown()
+    poseTimer = None
 
   print('Stopping mission.')
   mbClient.cancel_all_goals()
@@ -131,12 +148,14 @@ def handle_wp_set_tag(request):
 
 def handle_wp_remove(request):
   global currentMission
-  
   currentMission.waypoints.pop(request.wpid)
+  publish_current_mission()
+  return True
 
 def handle_wp_set_id(request):
   global currentMission
   currentMission.waypoints[request.wpid].waypoint_id = request.data
+  return True
   
 #
 # SUBSCRIBER HANDLERS
@@ -147,6 +166,14 @@ def handle_new_waypoint(msg):
   rospy.loginfo("Got new waypoint: %f,%f,%f %f,%f,%f,%f", msg.position.x, msg.position.y, msg.position.z, msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w)
   currentMission.add_waypoint(msg)
   publish_current_mission()
+
+def handle_tag_detections(msg):
+  global current_tag
+  
+  if len(msg.detections) > 0:
+    current_tag = msg.detections[0].id[0]
+  else:
+    current_tag = None
 
 #
 # ACTION CALLBACK HANDLERS
@@ -174,6 +201,8 @@ def handle_move_base_done(state, result):
   except tf.LookupException:
     rospy.loginfo("Could not acquire measurement for tag '%s' because it was not detected in frame.", currentMission.get_current_waypoint().tag)
     return
+
+  currentMission.add_visit(meas)
 
   nextWP = currentMission.next_waypoint()
   if nextWP is None:
@@ -210,12 +239,31 @@ def get_transform_pose(source_frame, target_frame):
 
   return pose
 
+def stamp_pose(pose, frame_id='map'):
+  poseStamped = PoseStamped()
+  poseStamped.pose = pose
+  poseStamped.header = Header()
+  poseStamped.header.stamp = rospy.Time.now()
+  poseStamped.header.frame_id = frame_id
+  return poseStamped
+
 def get_robot_pose():
   return get_transform_pose('/map', '/base_link')
 
-def get_measurement(tagname):
-  return get_transform_pose('/base_link', '/' + tagname)
+# Gets the pose of the given apriltag, relative to base_link
+def get_measurement(tagid):
+  return get_transform_pose('/base_link', '/' + str(tagid))
 
+# Gets the first detected tag in frame
+def get_tag_in_frame():
+  return current_tag
+  
+
+def poseTimerCallback(event):
+  global currentMission
+
+  pose = stamp_pose(get_robot_pose())
+  currentMission.add_pose_to_path(pose)
 
 #
 # MAIN FUNCTION
@@ -246,6 +294,7 @@ def coordinator_main():
   missionPub = rospy.Publisher('missions', MissionsMessage, queue_size=1, latch=True)
   cwpSub = rospy.Subscriber('add_waypoint', Pose, handle_new_waypoint)
   currentMissionPub = rospy.Publisher('current_mission', MissionMessage, queue_size=1, latch=True)
+  tagSub = rospy.Subscriber('tag_detections', AprilTagDetectionArray, handle_tag_detections)
 
   mbClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
