@@ -2,9 +2,10 @@ from geometry_msgs.msg import Pose
 from herox_coordinator.msg import Waypoint, WaypointVisit
 
 class MissionWaypoint:
-  def __init__(self, pose = None, waypoint_id = None, tag = None):
+  def __init__(self, pose = None, waypoint_id = None, tag = None, pose_reference = None):
     self.tag = tag
     self.pose = pose
+    self.pose_reference = pose_reference
     self.shortest_path = []
     self.visits = []
     self.currentPath = []
@@ -34,6 +35,7 @@ class MissionWaypoint:
     wp.shortestPath = self.shortest_path
     wp.visits = self.visits
     wp.tagid = self.tag
+    wp.measurementOffset = self.pose_reference
     return wp
 
   def load_from_msg(self, msg):
@@ -41,4 +43,5 @@ class MissionWaypoint:
     self.pose = msg.pose
     self.shortestPath = msg.shortestPath
     self.visits = msg.visits
+    self.pose_reference = msg.measurementOffset
     self.tag = msg.tagid
