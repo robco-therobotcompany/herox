@@ -20,8 +20,9 @@ class Mission:
   def set_benchmark_mode(self, benchmark_mode):
     self.benchmark = benchmark_mode
 
-  def add_waypoint(self, pose):
-    self.waypoints.append(MissionWaypoint(pose, waypoint_id = str(len(self.waypoints)), tag = "mytag"))
+  def add_waypoint(self, pose, tag, measurement):
+    wp = MissionWaypoint(pose, waypoint_id = str(len(self.waypoints)), tag = tag, pose_reference = measurement)
+    self.waypoints.append(wp)
 
   def get_current_waypoint(self):
     return self.waypoints[self.currentGoal]

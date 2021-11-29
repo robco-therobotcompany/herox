@@ -104,13 +104,13 @@ def handle_add_waypoint(request):
 
   print('Adding waypoint at current pose')
   pose = get_robot_pose()
-  tag = get_current_tag()
+  tag = get_tag_in_frame()
   if tag is None:
     print('No tag in frame! Waypoint not added.')
     return
 
   measurement = get_measurement(tag)
-  currentMission.add_waypoint(pose, measurement)
+  currentMission.add_waypoint(pose, tag, measurement)
   publish_current_mission()
   return (True, "")
 
@@ -141,10 +141,16 @@ def handle_wp_down(request):
   
 def handle_wp_set_tag(request):
   global currentMission
-  print("Changing tag of WP " + str(request.wpid) + " to " + request.data)
-  currentMission.waypoints[request.wpid].tag = request.data
-  publish_current_mission()
-  return True
+
+  try:
+    tagid = int(request.data)
+    print("Changing tag of WP " + str(request.wpid) + " to " + request.data)
+    currentMission.waypoints[request.wpid].tag = request.data
+    publish_current_mission()
+    return True
+  except:
+    print("Invalid value "  + str(request.data) + " for tag ID")
+    return False
 
 def handle_wp_remove(request):
   global currentMission
@@ -252,7 +258,7 @@ def get_robot_pose():
 
 # Gets the pose of the given apriltag, relative to base_link
 def get_measurement(tagid):
-  return get_transform_pose('/base_link', '/' + str(tagid))
+  return get_transform_pose('/base_link', '/' + 'tag_' + str(tagid))
 
 # Gets the first detected tag in frame
 def get_tag_in_frame():
