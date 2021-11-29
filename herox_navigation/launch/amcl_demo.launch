@@ -3,7 +3,7 @@
   <arg name="configuration" default="teb_local_planner"/>
 
   <!-- Run the map server -->
-  <arg name="map_file" default="$(find herox_navigation)/maps/robco_v2.yaml"/>
+  <arg name="map_file" default="$(find herox_navigation)/maps/robco_v2_clean.yaml"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
   <!--- Run AMCL -->

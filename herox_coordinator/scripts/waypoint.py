@@ -1,3 +1,4 @@
+import rospy
 from geometry_msgs.msg import Pose
 from herox_coordinator.msg import Waypoint, WaypointVisit
 
@@ -8,19 +9,19 @@ class MissionWaypoint:
     self.pose_reference = pose_reference
     self.shortest_path = []
     self.visits = []
-    self.currentPath = []
+    self.current_path = []
     self.waypoint_id = waypoint_id
  
   def add_visit(self, pose):
     visit = WaypointVisit()
     visit.stamp = rospy.Time.now()
     visit.measurement = pose
-    visit.path = current_path
-    current_path = []
+    visit.path = self.current_path
+    self.current_path = []
     self.visits.append(visit)
 
   def add_pose_to_path(self, pose):
-    self.currentPath.append(pose)
+    self.current_path.append(pose)
 
   def set_shortest_path(self, poses):
     self.shortest_path = poses.copy()

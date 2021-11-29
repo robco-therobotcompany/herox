@@ -25,7 +25,8 @@ class Mission:
     self.waypoints.append(wp)
 
   def get_current_waypoint(self):
-    return self.waypoints[self.currentGoal]
+    if self.currentGoal >= 0 and self.currentGoal < len(self.waypoints):
+      return self.waypoints[self.currentGoal]
 
   def next_waypoint(self):
     self.currentGoal = self.currentGoal + 1

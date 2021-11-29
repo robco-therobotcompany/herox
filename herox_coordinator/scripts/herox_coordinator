@@ -15,8 +15,9 @@ import tf
 import glob
 from mission import Mission
 from waypoint import MissionWaypoint
-from geometry_msgs.msg import Pose, PoseStamped
-from std_msgs.msg import Header
+from geometry_msgs.msg import Pose, PoseStamped, PoseArray, Vector3
+from visualization_msgs.msg import Marker, MarkerArray
+from std_msgs.msg import Header, ColorRGBA
 from std_srvs.srv import Trigger
 from herox_coordinator.msg import Mission as MissionMessage, Missions as MissionsMessage
 from herox_coordinator.srv import NewMission, LoadMission, SaveMission, WaypointAction
@@ -60,12 +61,49 @@ def publish_missions():
 
 def publish_current_mission():
   global currentMissionPub
+  global missionWaypointsPub
   global currentMission
 
+  # Publish current mission
   msg = MissionMessage()
   msg.name = currentMission.name
   msg.waypoints = [wp.get_msg() for wp in currentMission.waypoints]
   currentMissionPub.publish(msg)
+
+  # Publish markers
+  msg = MarkerArray()
+  msg.markers = []
+  for idx, wp in enumerate(currentMission.waypoints):
+    marker = Marker()
+    marker.header = Header()
+    marker.header.stamp = rospy.Time.now()
+    marker.header.frame_id = 'map'
+    marker.ns = 'mission_waypoints'
+    marker.id = idx
+    marker.type = Marker.ARROW
+    marker.action = Marker.ADD
+    marker.pose = wp.pose
+    marker.scale = Vector3(0.5,0.1,0.1)
+    marker.color = ColorRGBA(0,0,1,1)
+    msg.markers.append(marker)
+  # current WP marker
+  marker = Marker()
+  marker.header = Header()
+  marker.header.stamp = rospy.Time.now()
+  marker.header.frame_id = 'map'
+  marker.ns = 'current_wp'
+  marker.id = len(currentMission.waypoints) + 1
+  marker.type = Marker.CYLINDER
+  if currentMission.get_current_waypoint() is not None:
+    marker.action = Marker.ADD
+    marker.pose = currentMission.get_current_waypoint().pose
+    marker.scale = Vector3(0.25,0.25,0.25)
+    marker.color = ColorRGBA(1,0,1,1)
+  else:
+    marker.action = Marker.DELETE
+    
+  msg.markers.append(marker)
+  missionMarkersPub.publish(msg)
   
 def handle_save_mission(request):
   global currentMission
@@ -94,6 +132,7 @@ def handle_start_mission(request):
   wp = currentMission.next_waypoint()
   if wp is None:
     return(False,"Failed to start mission, no waypoint was returned")
+  publish_current_mission()
 
   print('Sending waypoint ' + str(currentMission.currentGoal))
   send_waypoint(wp.pose)
@@ -211,8 +250,12 @@ def handle_move_base_done(state, result):
   currentMission.add_visit(meas)
 
   nextWP = currentMission.next_waypoint()
+  publish_current_mission()
   if nextWP is None:
     print('Mission finished')
+    if poseTimer is not None:
+      poseTimer.shutdown()
+      poseTimer = None
     return
   
   print('Sending waypoint ' + str(currentMission.currentGoal))
@@ -282,6 +325,7 @@ def coordinator_main():
   global missionPub
   global tagSub
   global currentMissionPub
+  global missionMarkersPub
 
   rospy.init_node('herox_coordinator')
   #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
@@ -301,6 +345,7 @@ def coordinator_main():
   cwpSub = rospy.Subscriber('add_waypoint', Pose, handle_new_waypoint)
   currentMissionPub = rospy.Publisher('current_mission', MissionMessage, queue_size=1, latch=True)
   tagSub = rospy.Subscriber('tag_detections', AprilTagDetectionArray, handle_tag_detections)
+  missionMarkersPub = rospy.Publisher('mission_markers', MarkerArray, queue_size=1, latch=True)
 
   mbClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
