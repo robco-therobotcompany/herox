@@ -19,6 +19,8 @@ from geometry_msgs.msg import Pose, PoseStamped, PoseArray, Vector3
 from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import Header, ColorRGBA
 from std_srvs.srv import Trigger
+from nav_msgs.msg import Path
+from nav_msgs.srv import GetPlan
 from herox_coordinator.msg import Mission as MissionMessage, Missions as MissionsMessage
 from herox_coordinator.srv import NewMission, LoadMission, SaveMission, WaypointAction
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -202,6 +204,21 @@ def handle_wp_set_id(request):
   currentMission.waypoints[request.wpid].waypoint_id = request.data
   return True
   
+def handle_add_shortest_paths(request):
+  global currentMission
+  global getPlanSrv
+  
+  last_pose = None
+  for wp in currentMission.waypoints:
+    if last_pose is not None:
+      plan = getPlanSrv(stamp_pose(last_pose),stamp_pose(wp.pose),0.01).plan
+      wp.set_shortest_path([p.pose for p in plan.poses])
+    
+    last_pose = wp.pose
+
+  publish_current_mission()
+  return (True,"")
+
 #
 # SUBSCRIBER HANDLERS
 #
@@ -228,6 +245,7 @@ def handle_move_base_feedback(fb):
 
 def handle_move_base_done(state, result):
   global currentMission
+  global getPlanSrv
 
   rospy.loginfo("move_base is done")
   rospy.loginfo("State: %s", str(state))
@@ -257,9 +275,10 @@ def handle_move_base_done(state, result):
       poseTimer.shutdown()
       poseTimer = None
     return
-  
+
   print('Sending waypoint ' + str(currentMission.currentGoal))
   send_waypoint(nextWP.pose)
+
 
 #
 # HELPERS
@@ -326,6 +345,7 @@ def coordinator_main():
   global tagSub
   global currentMissionPub
   global missionMarkersPub
+  global getPlanSrv
 
   rospy.init_node('herox_coordinator')
   #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
@@ -340,6 +360,8 @@ def coordinator_main():
   rospy.Service('waypoint_set_tag', WaypointAction, handle_wp_set_tag)
   rospy.Service('waypoint_remove', WaypointAction, handle_wp_remove)
   rospy.Service('waypoint_set_id', WaypointAction, handle_wp_set_id)
+  rospy.Service('add_shortest_paths', Trigger, handle_add_shortest_paths)
+  getPlanSrv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
 
   missionPub = rospy.Publisher('missions', MissionsMessage, queue_size=1, latch=True)
   cwpSub = rospy.Subscriber('add_waypoint', Pose, handle_new_waypoint)

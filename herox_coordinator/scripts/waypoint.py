@@ -24,7 +24,7 @@ class MissionWaypoint:
     self.current_path.append(pose)
 
   def set_shortest_path(self, poses):
-    self.shortest_path = poses.copy()
+    self.shortest_path = poses
 
   def increment_visits(self):
     self.visits = self.visits + 1

@@ -1,6 +1,8 @@
 <launch>
   <arg name="scan_topic" default="/scan" />
   <arg name="configuration" default="teb_local_planner"/>
+  <!--<arg name="configuration" default="dwa_local_planner"/>-->
+  <!--<arg name="configuration" default="base_local_planner"/>-->
 
   <!-- Run the map server -->
   <arg name="map_file" default="$(find herox_navigation)/maps/robco_v2_clean.yaml"/>
