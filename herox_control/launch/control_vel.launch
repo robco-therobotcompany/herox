@@ -6,7 +6,7 @@
 
     <!-- Controllers -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner"
-        args="herox_joint_publisher herox_velocity_controller herox_velocity_controller2" />
+        args="herox_joint_publisher herox_velocity_controller" />
 
     <node name="driver_init" pkg="rosservice" type="rosservice" args="call --wait /driver/init" />
 

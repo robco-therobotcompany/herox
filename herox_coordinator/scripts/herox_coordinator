@@ -219,6 +219,12 @@ def handle_add_shortest_paths(request):
   publish_current_mission()
   return (True,"")
 
+def handle_clear_visits(request):
+  for wp in currentMission.waypoints:
+    del wp.visits[:]
+  publish_current_mission()
+  return (True,"")
+
 #
 # SUBSCRIBER HANDLERS
 #
@@ -361,6 +367,7 @@ def coordinator_main():
   rospy.Service('waypoint_remove', WaypointAction, handle_wp_remove)
   rospy.Service('waypoint_set_id', WaypointAction, handle_wp_set_id)
   rospy.Service('add_shortest_paths', Trigger, handle_add_shortest_paths)
+  rospy.Service('clear_waypoint_visits', Trigger, handle_clear_visits)
   getPlanSrv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
 
   missionPub = rospy.Publisher('missions', MissionsMessage, queue_size=1, latch=True)
