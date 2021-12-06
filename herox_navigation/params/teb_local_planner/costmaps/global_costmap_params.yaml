@@ -18,4 +18,4 @@ global_costmap:
 
   inflater_layer:
    cost_scaling_factor: 2.5
-   inflation_radius: 0.6
+   inflation_radius: 0.5

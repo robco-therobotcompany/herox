@@ -29,6 +29,7 @@ from apriltag_ros.msg import AprilTagDetectionArray
 
 currentMission = Mission()
 missionsPath = 'herox_coordinator/missions'
+poseTimer = None
 
 #
 # SERVICE HANDLERS

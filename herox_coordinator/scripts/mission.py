@@ -40,10 +40,12 @@ class Mission:
     return self.waypoints[self.currentGoal]
 
   def add_visit(self, pose):
-    self.waypoints[self.currentGoal].add_visit(pose)
+    if 0 <= self.currentGoal < len(self.waypoints):
+      self.waypoints[self.currentGoal].add_visit(pose)
 
   def add_pose_to_path(self, pose):
-    self.waypoints[self.currentGoal].add_pose_to_path(pose)
+    if 0 <= self.currentGoal < len(self.waypoints):
+      self.waypoints[self.currentGoal].add_pose_to_path(pose)
 
   def reset(self, start_at=0):
     self.currentGoal = start_at - 1
