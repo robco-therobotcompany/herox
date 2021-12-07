@@ -6,13 +6,14 @@ local_costmap:
   width: 5.0
   height: 5.0
   resolution: 0.1
-  static_map: false
   rolling_window: true 
 
+  footprint_padding: 0
+
   plugins:
-  - {name: obstacles_layer, type: "costmap_2d::ObstacleLayer"}
+  - {name: obstacles, type: "costmap_2d::ObstacleLayer"}
   - {name: inflater_layer, type: "costmap_2d::InflationLayer"}
 
   inflater_layer:
-   inflation_radius: 0.4
-   cost_scaling_factor: 100.0
+   cost_scaling_factor: 0.0
+   inflation_radius: 0.35
