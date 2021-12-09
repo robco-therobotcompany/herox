@@ -11,6 +11,9 @@ class MissionWaypoint:
     self.visits = []
     self.current_path = []
     self.waypoint_id = waypoint_id
+
+  def clear_path():
+    self.current_path = []
  
   def add_visit(self, pose):
     visit = WaypointVisit()

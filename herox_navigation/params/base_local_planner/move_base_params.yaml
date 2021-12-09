@@ -3,7 +3,7 @@ shutdown_costmaps: false
 base_local_planner: base_local_planner/TrajectoryPlannerROS
 base_global_planner: global_planner/GlobalPlanner
 
-controller_frequency: 10.0
+controller_frequency: 7.5 # Motor SYNC interval is 7.5 Hz
 controller_patience: 5.0
 
 planner_frequency: 0.5 # Run only when a new goal is received or the local planner reports that the path is blocked
@@ -14,3 +14,6 @@ oscillation_distance: 0.5
 
 recovery_behavior_enabled: true
 clearing_rotation_allowed: true
+
+max_planning_retries: 5
+conservative_reset_dist: 5.0

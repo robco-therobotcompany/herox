@@ -3,8 +3,8 @@ local_costmap:
   robot_base_frame: base_link
   update_frequency: 5.0
   publish_frequency: 2.0
-  width: 3.0
-  height: 3.0
+  width: 4.0
+  height: 4.0
   resolution: 0.025
   rolling_window: true 
 
@@ -13,5 +13,5 @@ local_costmap:
   - {name: inflater_layer, type: "costmap_2d::InflationLayer"}
 
   inflater_layer:
-   inflation_radius: 1.0
-   cost_scaling_factor: 2.5
+   inflation_radius: 0.4
+   cost_scaling_factor: 6

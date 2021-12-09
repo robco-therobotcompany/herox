@@ -126,7 +126,11 @@ def handle_start_mission(request):
   print('Starting mission.')
 
   # Reset mission waypoint counter
-  currentMission.reset()
+  currentMission.reset(request.start_waypoint)
+
+  # Clear pahts of all waypoints
+  for wp in currentMission.waypoints:
+    wp.clear_path()
 
   # Start timer for pose recording
   poseTimer = rospy.Timer(rospy.Duration(0.2), poseTimerCallback)
@@ -253,6 +257,7 @@ def handle_move_base_feedback(fb):
 def handle_move_base_done(state, result):
   global currentMission
   global getPlanSrv
+  global poseTimer
 
   rospy.loginfo("move_base is done")
   rospy.loginfo("State: %s", str(state))

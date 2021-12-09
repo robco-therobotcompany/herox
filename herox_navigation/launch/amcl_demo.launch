@@ -2,7 +2,7 @@
   <arg name="scan_topic" default="/scan" />
 
   <!-- Which NAV configuration to launch. Options are:
-       teb_local_planner, dwa_local_planner, base_local_planner -->
+       teb_local_planner, dwa_local_planner, base_local_planner, eband_local_planner -->
   <arg name="configuration" default="dwa_local_planner"/>
 
   <!-- Run the map server -->
