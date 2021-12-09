@@ -65,6 +65,7 @@ add_service_files(
   NewMission.srv
   SaveMission.srv
   WaypointAction.srv
+  StartMission.srv
 )
 
 ## Generate actions in the 'action' folder
