@@ -17,12 +17,12 @@ from mission import Mission
 from waypoint import MissionWaypoint
 from geometry_msgs.msg import Pose, PoseStamped, PoseArray, Vector3
 from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import Header, ColorRGBA
+from std_msgs.msg import Header, ColorRGBA, String
 from std_srvs.srv import Trigger
 from nav_msgs.msg import Path
 from nav_msgs.srv import GetPlan
 from herox_coordinator.msg import Mission as MissionMessage, Missions as MissionsMessage
-from herox_coordinator.srv import NewMission, LoadMission, SaveMission, WaypointAction
+from herox_coordinator.srv import NewMission, LoadMission, SaveMission, WaypointAction, StartMission
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID
 from apriltag_ros.msg import AprilTagDetectionArray
@@ -107,6 +107,20 @@ def publish_current_mission():
     
   msg.markers.append(marker)
   missionMarkersPub.publish(msg)
+
+def start_pose_timer():
+  global poseTimer
+
+  if poseTimer is not None:
+    print("poseTimer is already started!")
+    return
+  poseTimer = rospy.Timer(rospy.Duration(0.2), poseTimerCallback)
+
+def stop_pose_timer():
+  global poseTimer
+  if poseTimer is not None:
+    poseTimer.shutdown()
+    poseTimer = None
   
 def handle_save_mission(request):
   global currentMission
@@ -121,7 +135,7 @@ def handle_save_mission(request):
 
 def handle_start_mission(request):
   global currentMission
-  global poseTimer
+  global statusPub
 
   print('Starting mission.')
 
@@ -133,7 +147,7 @@ def handle_start_mission(request):
     wp.clear_path()
 
   # Start timer for pose recording
-  poseTimer = rospy.Timer(rospy.Duration(0.2), poseTimerCallback)
+  start_pose_timer()
 
   # Send first goal to move_base
   wp = currentMission.next_waypoint()
@@ -143,7 +157,8 @@ def handle_start_mission(request):
 
   print('Sending waypoint ' + str(currentMission.currentGoal))
   send_waypoint(wp.pose)
-  return (True, "")
+  statusPub.publish(String('TRANSIT'))
+  return True
 
 def handle_add_waypoint(request):
   global currentMission
@@ -163,14 +178,13 @@ def handle_add_waypoint(request):
 def handle_stop_mission(request):
   global currentMission
   global mbClient
-  global poseTimer
+  global statusPub
 
-  if poseTimer is not None:
-    poseTimer.shutdown()
-    poseTimer = None
+  stop_pose_timer()
 
   print('Stopping mission.')
   mbClient.cancel_all_goals()
+  statusPub.publish(String('STOP'))
   return (True, "")
 
 def handle_wp_up(request):
@@ -257,7 +271,7 @@ def handle_move_base_feedback(fb):
 def handle_move_base_done(state, result):
   global currentMission
   global getPlanSrv
-  global poseTimer
+  global statusPub
 
   rospy.loginfo("move_base is done")
   rospy.loginfo("State: %s", str(state))
@@ -278,19 +292,41 @@ def handle_move_base_done(state, result):
     return
 
   currentMission.add_visit(meas)
+  publish_current_mission()
+
+  # PAUSE AND WAIT FOR CONTINUE SRV
+  stop_pose_timer()
+  statusPub.publish(String('WAIT'))
+  #nextWP = currentMission.next_waypoint()
+  #if nextWP is None:
+  #  print('Mission finished')
+  #  stop_pose_timer()
+  #  return
+
+  #print('Sending waypoint ' + str(currentMission.currentGoal))
+  #send_waypoint(nextWP.pose)
+
+def handle_continue_mission(request):
+  global currentMission
+  global statusPub
+
+  print('Continuing...')
 
   nextWP = currentMission.next_waypoint()
   publish_current_mission()
   if nextWP is None:
     print('Mission finished')
-    if poseTimer is not None:
-      poseTimer.shutdown()
-      poseTimer = None
+    statusPub.publish(String('FINISHED'))
     return
+
+  start_pose_timer()
 
   print('Sending waypoint ' + str(currentMission.currentGoal))
   send_waypoint(nextWP.pose)
 
+  statusPub.publish(String('TRANSIT'))
+
+  return (True, "")
 
 #
 # HELPERS
@@ -358,13 +394,14 @@ def coordinator_main():
   global currentMissionPub
   global missionMarkersPub
   global getPlanSrv
+  global statusPub
 
   rospy.init_node('herox_coordinator')
   #pub = rospy.Publisher('subsystem_status', SubsystemStatus, queue_size=10)
   loadSrv = rospy.Service('load_mission', LoadMission, handle_load_mission)
   newSrv = rospy.Service('new_mission', NewMission, handle_new_mission)
   saveSrv = rospy.Service('save_mission', SaveMission, handle_save_mission)
-  startSrv = rospy.Service('start_mission', Trigger, handle_start_mission)
+  startSrv = rospy.Service('start_mission', StartMission, handle_start_mission)
   stopSrv = rospy.Service('stop_mission', Trigger, handle_stop_mission)
   wpSrv = rospy.Service('add_waypoint', Trigger, handle_add_waypoint)
   rospy.Service('waypoint_up', WaypointAction, handle_wp_up)
@@ -374,6 +411,7 @@ def coordinator_main():
   rospy.Service('waypoint_set_id', WaypointAction, handle_wp_set_id)
   rospy.Service('add_shortest_paths', Trigger, handle_add_shortest_paths)
   rospy.Service('clear_waypoint_visits', Trigger, handle_clear_visits)
+  rospy.Service('continue_mission', Trigger, handle_continue_mission)
   getPlanSrv = rospy.ServiceProxy('/move_base/make_plan', GetPlan)
 
   missionPub = rospy.Publisher('missions', MissionsMessage, queue_size=1, latch=True)
@@ -381,6 +419,7 @@ def coordinator_main():
   currentMissionPub = rospy.Publisher('current_mission', MissionMessage, queue_size=1, latch=True)
   tagSub = rospy.Subscriber('tag_detections', AprilTagDetectionArray, handle_tag_detections)
   missionMarkersPub = rospy.Publisher('mission_markers', MarkerArray, queue_size=1, latch=True)
+  statusPub = rospy.Publisher('mission_status', String, queue_size=1, latch=True)
 
   mbClient = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 

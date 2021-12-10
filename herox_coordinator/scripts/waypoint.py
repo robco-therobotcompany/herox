@@ -12,7 +12,7 @@ class MissionWaypoint:
     self.current_path = []
     self.waypoint_id = waypoint_id
 
-  def clear_path():
+  def clear_path(self):
     self.current_path = []
  
   def add_visit(self, pose):
@@ -45,7 +45,7 @@ class MissionWaypoint:
   def load_from_msg(self, msg):
     self.waypoint_id = msg.id
     self.pose = msg.pose
-    self.shortestPath = msg.shortestPath
+    self.shortest_path = msg.shortestPath
     self.visits = msg.visits
     self.pose_reference = msg.measurementOffset
     self.tag = msg.tagid
