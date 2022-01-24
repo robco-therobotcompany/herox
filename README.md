@@ -2,6 +2,10 @@ Based on [ridgeback](https://github.com/ridgeback/ridgeback).
 
 Common packages for HEROX AMR. These packages are relevant for simulation as well as running on the robot hardware.
 
+# OPEN SOURCE LICENSES
+
+For OSS licenses used by dependencies, see [LICENSES.md](LICENSES.md)
+
 # Installation
 
 First, clone the `herox` repository into a catkin workspace:
